@@ -30,7 +30,7 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Setup base path env
-        run: echo "VITE_BASE_PATH=/ssoportal/" > .env.production
+        run: printf 'VITE_BASE_PATH=/ssoportal/\n' > .env.production
       - name: Build
         run: npm run build
       - name: Postbuild (generate 404)
