@@ -30,7 +30,15 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Setup base path env
-        run: printf 'VITE_BASE_PATH=/ssoportal/\n' > .env.production
+        run: |
+          if [ -n "${{ vars.CUSTOM_DOMAIN }}" ]; then
+            echo "Detected custom domain: ${{ vars.CUSTOM_DOMAIN }}"
+            printf 'VITE_BASE_PATH=/\n' > .env.production
+            mkdir -p public
+            echo "${{ vars.CUSTOM_DOMAIN }}" > public/CNAME
+          else
+            printf 'VITE_BASE_PATH=/ssoportal/\n' > .env.production
+          fi
       - name: Build
         run: npm run build
       - name: Postbuild (generate 404)

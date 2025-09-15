@@ -150,6 +150,41 @@ Hasil build default: `dist/index.html` + asset di `dist/assets/*` (hashing). Bas
 - `robots.txt` dan `sitemap.xml` dasar telah ditambahkan untuk memudahkan indexing.
 - Pastikan menambahkan OpenGraph image bila publik.
 
+## Custom Domain
+Workflow mendukung domain kustom dengan membuat variable repository (Settings → Variables → Actions) bernama `CUSTOM_DOMAIN`.
+
+1. Tambahkan variable `CUSTOM_DOMAIN` dengan nilai misal: `sangsongko.co.id` atau `sso.sangsongko.co.id`.
+2. Workflow otomatis:
+  - Mengganti `VITE_BASE_PATH` menjadi `/`
+  - Membuat `public/CNAME` berisi domain
+3. Push terbaru akan mendeploy ke domain itu setelah Anda mengatur DNS.
+
+### DNS (Root Domain)
+Tambahkan record A (IPv4) ke GitHub Pages:
+```
+185.199.108.153
+185.199.109.153
+185.199.110.153
+185.199.111.153
+```
+Opsional IPv6 (AAAA):
+```
+2606:50c0:8000::153
+2606:50c0:8001::153
+2606:50c0:8002::153
+2606:50c0:8003::153
+```
+
+### DNS (Subdomain `sso.` misal)
+Gunakan CNAME:
+```
+sso  CNAME  cahyoarsy.github.io.
+```
+
+Setelah propagasi (cek dengan `nslookup` / `dig`), buka Settings → Pages → pastikan domain diverifikasi.
+
+Jika Anda menghapus variable `CUSTOM_DOMAIN`, deployment berikutnya kembali memakai base `/ssoportal/`.
+
 
 
 ## Integrasi SSO (Garis Besar)
