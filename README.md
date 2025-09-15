@@ -74,6 +74,74 @@ npm run build
 npm run preview
 ```
 
+### Opsi Konfigurasi Base Path
+Secara default proyek ini memakai base relatif (`./`) sehingga asset hasil build dapat dipindah ke folder mana saja di hosting statis.
+
+Anda bisa mengubah base path lewat variabel environment `VITE_BASE_PATH`.
+
+Contoh file `.env.production` untuk GitHub Pages (repo bernama `ssoportal`):
+```
+VITE_BASE_PATH=/ssoportal/
+```
+Lalu jalankan:
+```bash
+npm run build
+```
+
+## Deploy ke GitHub Pages
+1. Pastikan repository sudah dibuat di GitHub (nama misal: `ssoportal`).
+2. Salin `.env.example` menjadi `.env.production` dan set `VITE_BASE_PATH=/ssoportal/` (atau nama repo Anda).
+3. Jalankan:
+   ```bash
+   npm install
+   npm run deploy
+   ```
+   Perintah `deploy` menggunakan paket `gh-pages` untuk push isi folder `dist` ke branch `gh-pages`.
+4. Di GitHub repository settings -> Pages -> pilih sumber `Deploy from a branch` dan branch `gh-pages` folder root.
+5. Akses: `https://<username>.github.io/ssoportal/`.
+
+Jika ingin otomatis via GitHub Actions, buat workflow (opsional) seperti:
+```
+name: Deploy Pages
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: echo "VITE_BASE_PATH=/ssoportal/" > .env.production
+      - run: npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+```
+
+## Deploy ke Shared / VPS / cPanel Hosting
+1. Jalankan `npm run build` (pastikan `VITE_BASE_PATH=./`).
+2. Upload seluruh isi folder `dist` ke folder publik (misal `public_html/sso`), bukan folder `dist` itu sendiri.
+3. Akses melalui `https://domain.com/sso/`.
+
+### Catatan SPA (Single Page App)
+Jika hosting tidak mendukung fallback ke `index.html` saat refresh di route lain, Anda harus menambahkan aturan rewrite (Nginx / Apache). Saat ini aplikasi tidak memakai routing React (single root), sehingga aman.
+
+## Struktur Build
+Hasil build default: `dist/index.html` + asset di `dist/assets/*` (hashing). Base relatif memastikan referensi `<script>` & `<link>` tetap valid ketika dipindahkan.
+
+## Checklist Produksi Minimum
+- [x] Base path relatif / sesuai lokasi hosting
+- [x] Token SSO saat ini masih mock (jangan gunakan di produksi nyata)
+- [ ] Ganti mock JWT menjadi token sah dari backend
+- [ ] Tambahkan header keamanan (CSP, HSTS, dll) di layer server
+- [ ] Implementasi logout global + revocation actual
+
+
 ## Integrasi SSO (Garis Besar)
 1. Redirect user ke `https://idp.example.com/oauth2/authorize?...` (Gunakan tombol Google atau SSO utama).
 2. Identity Provider (IdP) mengirim kembali `code` ke redirect URI.
