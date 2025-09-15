@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom layer */
+@layer base {
+  body {
+    font-family: theme('fontFamily.sans');
+    background-color: theme('colors.white');
+    color: theme('colors.slate.700');
+    transition-property: color, background-color;
+    transition-duration: 300ms;
+  }
+  .dark body {
+    background-color: theme('colors.slate.950');
+    color: theme('colors.slate.200');
+  }
+  ::selection { background: theme('colors.brand.500'); color: #fff; }
+}
+@layer components {
+  .container-section { max-width: 80rem; margin-left:auto; margin-right:auto; padding-left:1rem; padding-right:1rem; }
+  @media (min-width:640px){ .container-section { padding-left:1.5rem; padding-right:1.5rem; } }
+  @media (min-width:1024px){ .container-section { padding-left:2rem; padding-right:2rem; } }
+  .card { background:#fff; border-radius:1rem; box-shadow:0 4px 20px -2px rgba(0,0,0,0.06); border:1px solid #f1f5f9; }
+  .dark .card { background:#0f172a; border-color:#1e293b; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; font-weight:500; transition:background-color .2s, color .2s, border-color .2s; position:relative; }
+  .btn:focus { outline:2px solid theme('colors.brand.500'); outline-offset:2px; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-primary { background:#2563eb; color:#fff; }
+  .btn-primary:hover { background:#1d4ed8; }
+  .dark .btn-primary { background:#3b82f6; }
+  .dark .btn-primary:hover { background:#2563eb; }
+  .btn-outline { border:1px solid #2563eb; color:#2563eb; background:transparent; }
+  .btn-outline:hover { background:#eff6ff; }
+  .dark .btn-outline { border-color:#60a5fa; color:#93c5fd; }
+  .dark .btn-outline:hover { background:#1e293b; }
+  .badge { display:inline-flex; align-items:center; border-radius:9999px; background:#dbeafe; color:#1d4ed8; padding:0 .75rem; height:1.5rem; font-size:.75rem; font-weight:500; }
+  .dark .badge { background:rgba(59,130,246,0.15); color:#93c5fd; }
+}
+@layer utilities {
+  .fade-edge { mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent); }
+}

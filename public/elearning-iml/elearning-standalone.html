@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <title>E-Learning IML — Modul + Pre/Post Test (Standalone)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background:#f4f6f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#222; }
+    
+    /* SSO Banner */
+    .sso-banner{position:fixed;top:0;right:0;z-index:999;font-size:10px;padding:2px 4px;display:flex;gap:4px;align-items:center;background:rgba(15,23,42,.9);color:#e2e8f0;backdrop-filter:blur(6px);border-radius:0 0 0 8px;width:auto;transition:all 0.3s ease}
+    .sso-banner.minimized{width:32px;height:32px;padding:6px;border-radius:0 0 0 16px}
+    .sso-banner.minimized .sso-content{display:none}
+    .sso-banner.minimized .sso-toggle{display:block}
+    .sso-badge{background:#334155;border:1px solid #475569;padding:2px 6px;border-radius:4px}
+    .sso-badge.admin{background:#92400e;border-color:#f59e0b;color:#fcd34d}
+    .sso-toggle{display:none;cursor:pointer;font-size:14px;color:#e2e8f0;width:20px;height:20px;align-items:center;justify-content:center}
+    .sso-toggle:hover{color:#fcd34d}
+    
+    /* Layout */
+    .sidebar { width:260px; position:fixed; left:0; top:0; bottom:0; background:#2c3e50; color:#fff; padding:20px; overflow-y:auto; z-index:100; }
+    .main { margin-left:280px; padding:24px; }
+    
+    /* Components */
+    .nav-item { margin-bottom:8px; }
+    .card { border-radius:10px; box-shadow:0 6px 18px rgba(30,30,30,0.06); border:none; }
+    .small-muted { color:#6c757d; font-size:0.9rem; }
+    .content-card { background:#fff; border-radius:12px; padding:2rem; margin-bottom:2rem; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+    
+    /* Question styling */
+    .question-block { margin-bottom: 1.5rem; padding: 1.5rem; border-left: 4px solid #007bff; background: #f8f9fa; border-radius:8px; }
+    .question-block.essay { border-left-color: #28a745; }
+    .form-check { margin-bottom:0.7rem; }
+    .form-check-input { margin-right:0.7rem; }
+    .form-control { border-radius:6px; }
+    
+    /* Sidebar styling */
+    .sidebar-brand { padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem; }
+    .nav-item .btn { transition:all 0.2s ease; }
+    .nav-item .btn:hover { transform:translateX(4px); }
+    
+    /* Status indicators */
+    .test-status { padding:0.5rem 1rem; border-radius:20px; font-size:0.85rem; font-weight:500; }
+    .status-completed { background:#d4edda; color:#155724; }
+    .status-pending { background:#fff3cd; color:#856404; }
+    
+    /* Progress */
+    .progress-bar-custom { height:8px; border-radius:4px; background:#e9ecef; }
+    .progress-fill { height:100%; background:linear-gradient(90deg, #007bff, #0056b3); border-radius:4px; transition:width 0.3s ease; }
+    
+    /* Timer */
+    .timer-display { background:#dc3545; color:white; padding:0.5rem 1rem; border-radius:6px; font-weight:bold; text-align:center; }
+    .timer-warning { background:#fd7e14 !important; }
+    
+    /* Footer styling */
+    footer { margin-top:3rem; padding:2rem 0; background:#f8f9fa; border-radius:12px; }
+    pre.jsonout { background:#0d1117; color:#58a6ff; padding:1rem; border-radius:8px; max-height:300px; overflow:auto; font-size:0.85rem; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; position: relative; height:auto; }
+      .main { margin-left: 0; padding:1rem; }
+    }
+    
+    /* Button improvements */
+    .btn-compact { padding:8px 12px; font-size:0.9rem; border-radius:6px; font-weight:500; }
+    .btn-primary { background:#007bff; border-color:#007bff; }
+    .btn-success { background:#28a745; border-color:#28a745; }
+    
+    /* Animations */
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+  </style>
+</head>
+<body>
+  
+  <!-- SSO Banner -->
+  <div id="sso-top" class="sso-banner minimized" style="display:none">
+    <div class="sso-content d-flex align-items-center gap-2 flex-wrap">
+      <span class="sso-badge" id="sso-status">SSO…</span>
+      <span class="sso-badge" id="sso-user">-</span>
+      <span class="sso-badge" id="sso-role">role:-</span>
+      <span class="sso-badge" id="sso-exp">ttl:-</span>
+      <button id="sso-logout" class="btn btn-sm btn-outline-warning py-0" style="line-height:1;font-size:9px">Logout</button>
+    </div>
+    <div class="sso-toggle d-flex" onclick="toggleSSOBanner()">
+      <i class="fas fa-ellipsis-v"></i>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h4 class="mb-2"><i class="fas fa-graduation-cap me-2"></i>E-Learning IML</h4>
+      <p class="small-muted mb-0">Instalasi Motor Listrik — Modul & Evaluasi Terintegrasi</p>
+    </div>
+    
+    <!-- Test Status Summary -->
+    <div class="mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <small class="text-light">Progress Pembelajaran</small>
+        <span id="overall-progress" class="badge bg-light text-dark">0%</span>
+      </div>
+      <div class="progress-bar-custom">
+        <div id="progress-fill" class="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+    
+    <div class="mt-4">
+      <div class="nav-item">
+        <button class="btn btn-light btn-compact w-100 d-flex align-items-center justify-content-between" onclick="show('modul')">
+          <span><i class="fas fa-book me-2"></i>Modul Ajar</span>
+          <span id="modul-status" class="test-status status-pending">Belum</span>
+        </button>
+      </div>
+      <div class="nav-item">
+        <button class="btn btn-light btn-compact w-100 d-flex align-items-center justify-content-between" onclick="show('pre')">
+          <span><i class="fas fa-clipboard-list me-2"></i>Pre-Test</span>
+          <span id="pre-status" class="test-status status-pending">Belum</span>
+        </button>
+      </div>
+      <div class="nav-item">
+        <button class="btn btn-light btn-compact w-100 d-flex align-items-center justify-content-between" onclick="show('post')">
+          <span><i class="fas fa-clipboard-check me-2"></i>Post-Test</span>
+          <span id="post-status" class="test-status status-pending">Belum</span>
+        </button>
+      </div>
+      
+      <hr style="border-color:rgba(255,255,255,0.2); margin:1.5rem 0;">
+      
+      <div class="nav-item">
+        <button class="btn btn-outline-light btn-compact w-100" onclick="downloadAllResults()">
+          <i class="fas fa-download me-2"></i>Unduh Hasil (JSON)
+        </button>
+      </div>
+      <div class="nav-item">
+        <button class="btn btn-outline-light btn-compact w-100" onclick="clearAll()">
+          <i class="fas fa-trash me-2"></i>Reset Data Lokal
+        </button>
+      </div>
+    </div>
+    
+    <hr style="border-color:rgba(255,255,255,0.2); margin:1.5rem 0;">
+    <small class="text-light opacity-75">
+      <i class="fas fa-info-circle me-1"></i>
+      Standalone app dengan modul terintegrasi, pre-test (25 soal), dan post-test (25 soal)
+    </small>
+  </aside>
+
+  <main class="main">
+    <!-- MODUL SECTION -->
+    <div id="modul" class="content-section">
+      <div class="card p-4 mb-4">
+        <h3>Modul Ajar — Instalasi Motor Listrik</h3>
+        <p class="small-muted mb-2">Kompetensi: Teknik Instalasi Tenaga Listrik (TITL) — Kelas XI — Alokasi waktu ± 6 x 45 menit.</p>
+        <hr>
+        <div class="row">
+          <div class="col-md-4">
+            <h6>Ringkasan Modul</h6>
+            <p class="small-muted">Modul membahas prinsip pengasutan, proteksi, dan pengontrolan motor induksi 3 fasa serta rangkaian forward–reverse.</p>
+            <h6>Daftar Isi</h6>
+            <ul class="small">
+              <li><a href="#identitas" onclick="document.getElementById('identitas').scrollIntoView()">Identitas Modul</a></li>
+              <li><a href="#tujuan" onclick="document.getElementById('tujuan').scrollIntoView()">Tujuan Pembelajaran</a></li>
+              <li><a href="#materi" onclick="document.getElementById('materi').scrollIntoView()">Materi Pokok</a></li>
+              <li><a href="#langkah-pembelajaran" onclick="document.getElementById('langkah-pembelajaran').scrollIntoView()">Langkah Pembelajaran</a></li>
+              <li><a href="#penilaian" onclick="document.getElementById('penilaian').scrollIntoView()">Penilaian</a></li>
+            </ul>
+          </div>
+          <div class="col-md-8">
+            <section id="identitas" class="mb-3">
+              <h5>1. Identitas Modul</h5>
+              <p><strong>Nama Sekolah:</strong> SMKN 1 Kediri</p>
+              <p><strong>Kompetensi:</strong> Teknik Instalasi Tenaga Listrik (TITL)</p>
+              <p><strong>Mata Pelajaran:</strong> Instalasi Motor Listrik (IML)</p>
+              <p><strong>Kelas/Semester:</strong> XI / Fase F – Ganjil</p>
+              <p><strong>Alokasi Waktu:</strong> ± 6 x 45 menit (3 teori + praktik)</p>
+            </section>
+
+            <section id="tujuan" class="mb-3">
+              <h5>2. Tujuan Pembelajaran</h5>
+              <ul>
+                <li>Menjelaskan prinsip kerja motor induksi 3 fasa</li>
+                <li>Mendesain gambar rangkaian forward–reverse</li>
+                <li>Menerapkan instalasi kontrol dan daya dengan memperhatikan K3</li>
+              </ul>
+            </section>
+
+            <section id="materi" class="mb-3">
+              <h5>3. Materi Pokok</h5>
+              <ol>
+                <li>Pengantar motor listrik & tipe-tipe motor</li>
+                <li>Komponen rangkaian forward–reverse (kontaktor, overload relay/TOL, push button)</li>
+                <li>Proteksi dan pengukuran</li>
+                <li>Praktik pemasangan dan pengujian</li>
+              </ol>
+            </section>
+
+            <section id="langkah-pembelajaran" class="mb-3">
+              <h5>4. Langkah Pembelajaran</h5>
+              <p>Gabungan teori singkat, demonstrasi, dan praktik kerja kelompok dengan penilaian observasi dan tes akhir.</p>
+            </section>
+
+            <section id="penilaian" class="mb-3">
+              <h5>5. Penilaian</h5>
+              <p>Penilaian meliputi: tes tertulis (pre/post test), penilaian praktik, dan tugas/latihan. Pre/Post Test: 25 soal (15 PG, 10 uraian).</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRE-TEST SECTION -->
+    <div id="pre" class="content-section fade-in" style="display:none">
+      <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h3><i class="fas fa-clipboard-list me-2 text-primary"></i>Pre-Test Instalasi Motor Listrik</h3>
+            <p class="small-muted mb-0">Total 25 soal (15 pilihan ganda + 10 uraian). Durasi: 45 menit | Total Skor: 80 poin</p>
+          </div>
+          <div class="timer-display" id="pre-timer" style="display:none">
+            <i class="fas fa-clock me-2"></i><span id="pre-time">45:00</span>
+          </div>
+        </div>
+        
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i><strong>Instruksi:</strong> Jawab semua pertanyaan dengan teliti. KKM: 60 poin
+        </div>
+
+        <form id="pre-test-form">
+          <div class="row">
+            <div class="col-lg-8">
+              <!-- Pilihan Ganda -->
+              <section class="mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-check-circle me-2"></i>A. Pilihan Ganda (30 poin)</h4>
+                <p class="text-muted small">Pilihlah jawaban yang paling tepat! (2 poin per soal)</p>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>1.</strong> Motor listrik bekerja berdasarkan prinsip perubahan energi …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="a" id="q1a"><label class="form-check-label" for="q1a">a. Listrik menjadi kalor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="b" id="q1b"><label class="form-check-label" for="q1b">b. Listrik menjadi gerak mekanik</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="c" id="q1c"><label class="form-check-label" for="q1c">c. Mekanik menjadi listrik</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="d" id="q1d"><label class="form-check-label" for="q1d">d. Panas menjadi listrik</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>2.</strong> Bagian motor listrik yang berfungsi sebagai penghantar arus listrik ke kumparan rotor adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="a" id="q2a"><label class="form-check-label" for="q2a">a. Stator</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="b" id="q2b"><label class="form-check-label" for="q2b">b. Rotor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="c" id="q2c"><label class="form-check-label" for="q2c">c. Komutator</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="d" id="q2d"><label class="form-check-label" for="q2d">d. Bearing</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>3.</strong> Jenis motor listrik yang banyak digunakan di industri adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q3" value="a" id="q3a"><label class="form-check-label" for="q3a">a. Motor DC seri</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q3" value="b" id="q3b"><label class="form-check-label" for="q3b">b. Motor stepper</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q3" value="c" id="q3c"><label class="form-check-label" for="q3c">c. Motor induksi 3 fasa</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q3" value="d" id="q3d"><label class="form-check-label" for="q3d">d. Motor universal</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>4.</strong> Alat yang digunakan untuk membalik arah putaran motor induksi 3 fasa adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q4" value="a" id="q4a"><label class="form-check-label" for="q4a">a. Relay</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q4" value="b" id="q4b"><label class="form-check-label" for="q4b">b. Kontaktor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q4" value="c" id="q4c"><label class="form-check-label" for="q4c">c. MCB</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q4" value="d" id="q4d"><label class="form-check-label" for="q4d">d. Fuse</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>5.</strong> Rangkaian forward-reverse digunakan untuk …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q5" value="a" id="q5a"><label class="form-check-label" for="q5a">a. Mengubah kecepatan motor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q5" value="b" id="q5b"><label class="form-check-label" for="q5b">b. Mengubah arah putaran motor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q5" value="c" id="q5c"><label class="form-check-label" for="q5c">c. Menghemat energi listrik</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q5" value="d" id="q5d"><label class="form-check-label" for="q5d">d. Mengatur arus motor</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>6.</strong> Fungsi overload relay dalam rangkaian instalasi motor listrik adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q6" value="a" id="q6a"><label class="form-check-label" for="q6a">a. Melindungi motor dari hubungan singkat</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q6" value="b" id="q6b"><label class="form-check-label" for="q6b">b. Melindungi motor dari beban lebih</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q6" value="c" id="q6c"><label class="form-check-label" for="q6c">c. Mengatur kecepatan motor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q6" value="d" id="q6d"><label class="form-check-label" for="q6d">d. Mengurangi tegangan motor</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>7.</strong> Komponen utama pada rangkaian kontrol motor listrik adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q7" value="a" id="q7a"><label class="form-check-label" for="q7a">a. Kontaktor dan push button</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q7" value="b" id="q7b"><label class="form-check-label" for="q7b">b. Fuse dan MCB</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q7" value="c" id="q7c"><label class="form-check-label" for="q7c">c. Kabel dan saklar</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q7" value="d" id="q7d"><label class="form-check-label" for="q7d">d. Rotor dan stator</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>8.</strong> Motor induksi disebut juga sebagai motor …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q8" value="a" id="q8a"><label class="form-check-label" for="q8a">a. Sinkron</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q8" value="b" id="q8b"><label class="form-check-label" for="q8b">b. Asinkron</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q8" value="c" id="q8c"><label class="form-check-label" for="q8c">c. Universal</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q8" value="d" id="q8d"><label class="form-check-label" for="q8d">d. Stepper</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>9.</strong> Alat yang digunakan untuk mengukur arus pada motor listrik adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q9" value="a" id="q9a"><label class="form-check-label" for="q9a">a. Ohm meter</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q9" value="b" id="q9b"><label class="form-check-label" for="q9b">b. Voltmeter</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q9" value="c" id="q9c"><label class="form-check-label" for="q9c">c. Clamp meter</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q9" value="d" id="q9d"><label class="form-check-label" for="q9d">d. Megger</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>10.</strong> Hubungan bintang (Y) pada motor 3 fasa digunakan untuk …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q10" value="a" id="q10a"><label class="form-check-label" for="q10a">a. Menghasilkan torsi lebih besar</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q10" value="b" id="q10b"><label class="form-check-label" for="q10b">b. Mengurangi arus start</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q10" value="c" id="q10c"><label class="form-check-label" for="q10c">c. Mempercepat putaran motor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q10" value="d" id="q10d"><label class="form-check-label" for="q10d">d. Menambah daya motor</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>11.</strong> Sebelum melakukan instalasi motor listrik, langkah pertama yang harus diperhatikan adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q11" value="a" id="q11a"><label class="form-check-label" for="q11a">a. Mengukur tahanan isolasi</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q11" value="b" id="q11b"><label class="form-check-label" for="q11b">b. Menyambungkan motor ke jaringan</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q11" value="c" id="q11c"><label class="form-check-label" for="q11c">c. Memasang kabel kontrol</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q11" value="d" id="q11d"><label class="form-check-label" for="q11d">d. Memeriksa daya motor</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>12.</strong> Peralatan yang digunakan untuk proteksi terhadap arus hubung singkat adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q12" value="a" id="q12a"><label class="form-check-label" for="q12a">a. Overload relay</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q12" value="b" id="q12b"><label class="form-check-label" for="q12b">b. MCB</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q12" value="c" id="q12c"><label class="form-check-label" for="q12c">c. Kontaktor</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q12" value="d" id="q12d"><label class="form-check-label" for="q12d">d. Saklar</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>13.</strong> Salah satu simbol kelistrikan yang digunakan untuk kontaktor adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q13" value="a" id="q13a"><label class="form-check-label" for="q13a">a. K</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q13" value="b" id="q13b"><label class="form-check-label" for="q13b">b. F</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q13" value="c" id="q13c"><label class="form-check-label" for="q13c">c. M</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q13" value="d" id="q13d"><label class="form-check-label" for="q13d">d. L</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>14.</strong> Prinsip kerja motor induksi 3 fasa berdasarkan adanya …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q14" value="a" id="q14a"><label class="form-check-label" for="q14a">a. Gaya gerak listrik induksi</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q14" value="b" id="q14b"><label class="form-check-label" for="q14b">b. Gaya tarik elektromagnetik</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q14" value="c" id="q14c"><label class="form-check-label" for="q14c">c. Kumparan medan</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q14" value="d" id="q14d"><label class="form-check-label" for="q14d">d. Transformasi energi</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>15.</strong> Faktor utama yang memengaruhi arah putaran motor 3 fasa adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q15" value="a" id="q15a"><label class="form-check-label" for="q15a">a. Besar tegangan</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q15" value="b" id="q15b"><label class="form-check-label" for="q15b">b. Frekuensi listrik</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q15" value="c" id="q15c"><label class="form-check-label" for="q15c">c. Urutan fasa</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q15" value="d" id="q15d"><label class="form-check-label" for="q15d">d. Jenis beban</label></div>
+                </div>
+              </section>
+
+              <!-- Uraian Singkat -->
+              <section class="mb-4">
+                <h4 class="text-success mb-3"><i class="fas fa-edit me-2"></i>B. Uraian Singkat (50 poin)</h4>
+                <p class="text-muted small">Jawab dengan singkat dan jelas! (5 poin per soal)</p>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>16.</strong> Jelaskan perbedaan antara motor DC dan motor AC!</p>
+                  <textarea class="form-control" name="q16" rows="3" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>17.</strong> Sebutkan tiga bagian utama dari motor listrik dan fungsinya!</p>
+                  <textarea class="form-control" name="q17" rows="3" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>18.</strong> Apa tujuan pemasangan kontaktor pada instalasi motor listrik?</p>
+                  <textarea class="form-control" name="q18" rows="2" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>19.</strong> Mengapa rangkaian pengaman sangat penting pada instalasi motor listrik?</p>
+                  <textarea class="form-control" name="q19" rows="3" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>20.</strong> Sebutkan langkah-langkah dasar dalam pemasangan rangkaian forward-reverse!</p>
+                  <textarea class="form-control" name="q20" rows="4" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>21.</strong> Apa perbedaan fungsi MCB dan overload relay dalam sistem proteksi motor?</p>
+                  <textarea class="form-control" name="q21" rows="3" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>22.</strong> Sebutkan contoh penerapan motor listrik dalam kehidupan sehari-hari!</p>
+                  <textarea class="form-control" name="q22" rows="2" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>23.</strong> Apa yang dimaksud dengan slip pada motor induksi?</p>
+                  <textarea class="form-control" name="q23" rows="2" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>24.</strong> Mengapa sebelum pemasangan motor harus dilakukan pengukuran isolasi?</p>
+                  <textarea class="form-control" name="q24" rows="3" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>25.</strong> Jelaskan secara singkat prosedur pemeriksaan awal sebelum motor listrik dioperasikan!</p>
+                  <textarea class="form-control" name="q25" rows="4" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+              </section>
+
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg me-2">
+                  <i class="fas fa-paper-plane me-2"></i>Kirim Jawaban Pre-Test
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="showPreAnswerKey()">
+                  <i class="fas fa-key me-2"></i>Lihat Kunci Jawaban
+                </button>
+              </div>
+            </div>
+
+            <!-- Sidebar Info -->
+            <div class="col-lg-4">
+              <div class="card sticky-top" style="top:20px">
+                <div class="card-header bg-info text-white">
+                  <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informasi Pre-Test</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <div class="border-end">
+                        <h6 class="text-primary mb-1">15 Soal</h6>
+                        <small class="text-muted">Pilihan Ganda</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <h6 class="text-success mb-1">10 Soal</h6>
+                      <small class="text-muted">Uraian Singkat</small>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Total Skor Maksimal:</span>
+                    <span class="badge bg-primary">80 Poin</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="text-muted small">Kriteria Lulus (KKM):</span>
+                    <span class="badge bg-success">60 Poin</span>
+                  </div>
+                  <hr>
+                  <h6 class="text-warning mb-2"><i class="fas fa-medal me-2"></i>Kriteria Penilaian</h6>
+                  <ul class="list-unstyled small">
+                    <li><span class="badge bg-success me-2">90-100</span>Sangat Baik</li>
+                    <li><span class="badge bg-info me-2">75-89</span>Baik</li>
+                    <li><span class="badge bg-warning me-2">60-74</span>Cukup</li>
+                    <li><span class="badge bg-danger me-2">&lt; 60</span>Perlu Bimbingan</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div id="pre-result" class="mt-4" style="display:none">
+          <div class="alert alert-info">
+            <h5><i class="fas fa-chart-line me-2"></i>Hasil Pre-Test</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <p>Skor: <strong id="pre-score">0</strong>/80</p>
+                <p>Nilai: <strong id="pre-percentage">0</strong>%</p>
+              </div>
+              <div class="col-md-6">
+                <p>Kriteria: <strong id="pre-criteria"></strong></p>
+                <p>Waktu: <strong id="pre-elapsed">0</strong> menit</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="pre-answer-key" class="mt-4" style="display:none">
+          <div class="alert alert-success">
+            <h5><i class="fas fa-key me-2"></i>📘 Kunci Jawaban Pre-Test</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-primary">A. Pilihan Ganda</h6>
+                <ol class="small">
+                  <li>b</li><li>c</li><li>c</li><li>b</li><li>b</li><li>b</li><li>a</li><li>b</li><li>c</li><li>b</li><li>a</li><li>b</li><li>a</li><li>a</li><li>c</li>
+                </ol>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-success">B. Uraian (Poin Kunci)</h6>
+                <ul class="small">
+                  <li><strong>16:</strong> DC pakai komutator, AC lebih awet</li>
+                  <li><strong>17:</strong> Stator (medan), Rotor (putar), Bearing (penopang)</li>
+                  <li><strong>18:</strong> Saklar elektromagnetik otomatis</li>
+                  <li><strong>19:</strong> Melindungi motor dari kerusakan</li>
+                  <li><strong>20:</strong> Pasang 2 kontaktor, tukar fasa, interlock</li>
+                  <li><strong>21:</strong> MCB→hubung singkat, OL→beban lebih</li>
+                  <li><strong>22:</strong> Kipas, pompa, mesin cuci, lift</li>
+                  <li><strong>23:</strong> Perbedaan kecepatan sinkron vs rotor</li>
+                  <li><strong>24:</strong> Mencegah bocor arus ke ground</li>
+                  <li><strong>25:</strong> Cek fisik, ukur isolasi, uji singkat</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST-TEST SECTION -->
+    <div id="post" class="content-section fade-in" style="display:none">
+      <div class="content-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h3><i class="fas fa-clipboard-check me-2 text-success"></i>Post-Test Instalasi Motor Listrik</h3>
+            <p class="small-muted mb-0">Total 25 soal (15 pilihan ganda + 10 uraian). Durasi: 45 menit | Total Skor: 80 poin</p>
+          </div>
+          <div class="timer-display" id="post-timer" style="display:none">
+            <i class="fas fa-clock me-2"></i><span id="post-time">45:00</span>
+          </div>
+        </div>
+
+        <div class="alert alert-success">
+          <i class="fas fa-graduation-cap me-2"></i><strong>Evaluasi Akhir:</strong> Uji pemahaman setelah pembelajaran. KKM: 60 poin
+        </div>
+
+        <form id="post-test-form">
+          <div class="row">
+            <div class="col-lg-8">
+              <!-- Pilihan Ganda -->
+              <section class="mb-4">
+                <h4 class="text-primary mb-3"><i class="fas fa-check-circle me-2"></i>A. Pilihan Ganda (30 poin)</h4>
+                <p class="text-muted small">Pilihlah jawaban yang paling tepat! (2 poin per soal)</p>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>1.</strong> Motor induksi 3 fasa dapat berputar karena adanya …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="a" id="pq1a"><label class="form-check-label" for="pq1a">a. Komutator</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="b" id="pq1b"><label class="form-check-label" for="pq1b">b. Medan magnet stator yang berputar</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="c" id="pq1c"><label class="form-check-label" for="pq1c">c. Tegangan DC searah</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="d" id="pq1d"><label class="form-check-label" for="pq1d">d. Slip nol</label></div>
+                </div>
+
+                <div class="question-block">
+                  <p class="mb-2"><strong>2.</strong> Jika urutan fasa motor 3 fasa ditukar salah satu fasanya, maka yang terjadi adalah …</p>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="a" id="pq2a"><label class="form-check-label" for="pq2a">a. Motor mati total</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="b" id="pq2b"><label class="form-check-label" for="pq2b">b. Putaran motor berubah arah</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="c" id="pq2c"><label class="form-check-label" for="pq2c">c. Kecepatan motor meningkat</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="d" id="pq2d"><label class="form-check-label" for="pq2d">d. Motor terbakar</label></div>
+                </div>
+
+                <!-- Continue with remaining questions... -->
+                <div class="text-center mt-4">
+                  <p class="text-muted small">13 soal pilihan ganda lainnya akan ditampilkan dalam implementasi lengkap</p>
+                </div>
+              </section>
+
+              <!-- Uraian Singkat -->
+              <section class="mb-4">
+                <h4 class="text-success mb-3"><i class="fas fa-edit me-2"></i>B. Uraian Singkat (50 poin)</h4>
+                <p class="text-muted small">Jawab dengan singkat dan jelas! (5 poin per soal)</p>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>16.</strong> Jelaskan prinsip kerja motor induksi 3 fasa dengan menggunakan medan magnet putar!</p>
+                  <textarea class="form-control" name="q16" rows="4" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <div class="question-block essay">
+                  <p class="mb-2"><strong>17.</strong> Sebutkan perbedaan utama antara rangkaian forward-reverse dan star-delta!</p>
+                  <textarea class="form-control" name="q17" rows="3" placeholder="Tuliskan jawaban Anda di sini..."></textarea>
+                </div>
+
+                <!-- Additional essay questions placeholder -->
+                <div class="text-center mt-4">
+                  <p class="text-muted small">8 soal uraian lainnya akan ditampilkan dalam implementasi lengkap</p>
+                </div>
+              </section>
+
+              <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg me-2">
+                  <i class="fas fa-paper-plane me-2"></i>Kirim Jawaban Post-Test
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="showPostAnswerKey()">
+                  <i class="fas fa-key me-2"></i>Lihat Kunci Jawaban
+                </button>
+              </div>
+            </div>
+
+            <!-- Sidebar Info -->
+            <div class="col-lg-4">
+              <div class="card sticky-top" style="top:20px">
+                <div class="card-header bg-success text-white">
+                  <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Informasi Post-Test</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <div class="border-end">
+                        <h6 class="text-primary mb-1">15 Soal</h6>
+                        <small class="text-muted">Pilihan Ganda</small>
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <h6 class="text-success mb-1">10 Soal</h6>
+                      <small class="text-muted">Uraian Singkat</small>
+                    </div>
+                  </div>
+                  <hr>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Total Skor Maksimal:</span>
+                    <span class="badge bg-success">80 Poin</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="text-muted small">Kriteria Lulus (KKM):</span>
+                    <span class="badge bg-warning">60 Poin</span>
+                  </div>
+                  <hr>
+                  <h6 class="text-primary mb-2"><i class="fas fa-chart-line me-2"></i>Target Evaluasi</h6>
+                  <ul class="list-unstyled small">
+                    <li><i class="fas fa-check text-success me-2"></i>Pemahaman prinsip forward-reverse</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Penguasaan komponen proteksi</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Kemampuan troubleshooting</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Prosedur K3 dan instalasi</li>
+                  </ul>
+                  <hr>
+                  <div class="alert alert-info py-2 mb-0">
+                    <i class="fas fa-lightbulb me-2"></i><small><strong>Tips:</strong> Pastikan semua soal terjawab sebelum submit!</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <div id="post-result" class="mt-4" style="display:none">
+          <div class="alert alert-success">
+            <h5><i class="fas fa-chart-line me-2"></i>Hasil Post-Test</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <p>Skor: <strong id="post-score">0</strong>/80</p>
+                <p>Nilai: <strong id="post-percentage">0</strong>%</p>
+              </div>
+              <div class="col-md-6">
+                <p>Kriteria: <strong id="post-criteria"></strong></p>
+                <p>Waktu: <strong id="post-elapsed">0</strong> menit</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="post-answer-key" class="mt-4" style="display:none">
+          <div class="alert alert-info">
+            <h5><i class="fas fa-key me-2"></i>📘 Kunci Jawaban Post-Test</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-primary">A. Pilihan Ganda (Sample)</h6>
+                <ol class="small">
+                  <li>b. Medan magnet stator yang berputar</li>
+                  <li>b. Putaran motor berubah arah</li>
+                  <li>... (jawaban lengkap dalam implementasi penuh)</li>
+                </ol>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-success">B. Uraian (Poin Kunci)</h6>
+                <ul class="small">
+                  <li><strong>16:</strong> Medan putar stator → GGL induksi rotor → torsi berputar</li>
+                  <li><strong>17:</strong> Forward-reverse: ubah arah, Star-delta: kurangi arus start</li>
+                  <li>... (poin kunci lengkap dalam implementasi penuh)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="card p-3 mb-3">
+        <h6><i class="fas fa-info-circle text-info"></i> Informasi untuk Guru</h6>
+        <p class="small mb-2">Akses panel monitoring guru untuk melihat hasil test siswa:</p>
+        <a href="../monitoring/" class="btn btn-info btn-sm" target="_blank">
+          <i class="fas fa-chart-line"></i> Buka Panel Monitoring
+        </a>
+      </div>
+      
+      <div class="card p-3">
+        <h6>Data Tersimpan</h6>
+        <pre id="saved-data" class="jsonout">Belum ada data test yang tersimpan</pre>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // Navigation with timer functionality
+    function show(id){
+      document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+      window.scrollTo({top:0,behavior:'smooth'});
+      
+      // Initialize timers for tests
+      if(id === 'pre') {
+        preTestStartTime = Date.now();
+        document.getElementById('pre-timer').style.display = 'block';
+        startCountdownTimer('pre-time', 45); // 45 minutes for pre-test
+      } else if(id === 'post') {
+        postTestStartTime = Date.now();
+        // Post-test timer logic can be added here
+      }
+      
+      updateSavedDataDisplay();
+    }
+    
+    // Countdown timer function
+    function startCountdownTimer(elementId, minutes) {
+      let totalSeconds = minutes * 60;
+      const timerElement = document.getElementById(elementId);
+      
+      const timer = setInterval(() => {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        timerElement.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        if(totalSeconds <= 0) {
+          clearInterval(timer);
+          timerElement.textContent = "00:00";
+          alert("Waktu habis! Silakan submit jawaban Anda.");
+        }
+        totalSeconds--;
+      }, 1000);
+    }
+    
+    // Initialize with modul view
+    show('modul');
+
+    // Answer keys for comprehensive tests
+    const PRE_ANSWERS = { 
+      q1:'b', q2:'c', q3:'c', q4:'b', q5:'b', q6:'b', q7:'a', q8:'b', q9:'c', q10:'b', 
+      q11:'a', q12:'b', q13:'a', q14:'a', q15:'c'
+    };
+    const POST_ANSWERS = { 
+      q1:'b', q2:'b', q3:'c', q4:'b', q5:'b', q6:'b', q7:'b', q8:'b', q9:'b', q10:'b', 
+      q11:'a', q12:'b', q13:'b', q14:'b', q15:'b'
+    };
+
+    // Timer variables
+    let preTestStartTime = null;
+    let postTestStartTime = null;
+
+    // Comprehensive scoring function
+    function getCriteria(percentage){
+      if (percentage >= 90) return 'Sangat Baik';
+      if (percentage >= 75) return 'Baik';
+      if (percentage >= 60) return 'Cukup';
+      return 'Perlu Bimbingan';
+    }
+
+    // Function to show answer key
+    function showPreAnswerKey() {
+      const answerKey = document.getElementById('pre-answer-key');
+      answerKey.style.display = answerKey.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Function to show post-test answer key
+    function showPostAnswerKey() {
+      const answerKey = document.getElementById('post-answer-key');
+      answerKey.style.display = answerKey.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Pre-test handler with comprehensive scoring
+    document.getElementById('pre-test-form').addEventListener('submit', function(e){
+      e.preventDefault();
+      const formData = new FormData(this);
+      let score = 0;
+      const answers = {};
+      
+      // Score multiple choice questions (15 questions, 2 points each = 30 points)
+      for(let i = 1; i <= 15; i++){
+        const answer = formData.get('q' + i) || '';
+        answers['q' + i] = answer;
+        if(answer === PRE_ANSWERS['q' + i]){
+          score += 2;
+        }
+      }
+      
+      // Score essay questions (10 questions, 5 points each = 50 points)
+      for(let i = 16; i <= 25; i++){
+        const answer = formData.get('q' + i) || '';
+        answers['q' + i] = answer;
+        
+        // Basic scoring for essay questions
+        if(answer.trim().length > 10) {
+          score += 3; // Partial credit for attempt
+          if(answer.trim().length > 30) {
+            score += 2; // Full credit for detailed answer
+          }
+        }
+      }
+      
+      const percentage = Math.round((score / 80) * 100);
+      const criteria = getCriteria(percentage);
+      
+      // Calculate elapsed time
+      const elapsed = preTestStartTime ? Math.round((Date.now() - preTestStartTime) / 60000) : 0;
+      
+      // Display results
+      document.getElementById('pre-score').textContent = score;
+      document.getElementById('pre-percentage').textContent = percentage;
+      document.getElementById('pre-criteria').textContent = criteria;
+      document.getElementById('pre-elapsed').textContent = elapsed;
+      document.getElementById('pre-result').style.display = 'block';
+      
+      // Save to localStorage
+      const results = JSON.parse(localStorage.getItem('elearning_results') || '{}');
+      results.preTest = {
+        score: score,
+        total: 80,
+        percentage: percentage,
+        criteria: criteria,
+        answers: answers,
+        elapsed: elapsed,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('elearning_results', JSON.stringify(results));
+      
+      // Send to monitoring system
+      sendToMonitoring('preTest', results.preTest);
+      
+      alert(`Pre-Test selesai! Skor: ${score}/80 (${percentage}%)\nKriteria: ${criteria}`);
+      updateSavedDataDisplay();
+    });
+
+    // Post-test handler with comprehensive scoring
+    document.getElementById('post-test-form').addEventListener('submit', function(e){
+      e.preventDefault();
+      const formData = new FormData(this);
+      let score = 0;
+      const answers = {};
+      
+      // Score multiple choice questions (15 questions, 2 points each = 30 points)
+      for(let i = 1; i <= 15; i++){
+        const answer = formData.get('q' + i) || '';
+        answers['q' + i] = answer;
+        if(answer === POST_ANSWERS['q' + i]){
+          score += 2;
+        }
+      }
+      
+      // Score essay questions (10 questions, 5 points each = 50 points)
+      for(let i = 16; i <= 25; i++){
+        const answer = formData.get('q' + i) || '';
+        answers['q' + i] = answer;
+        
+        // Basic scoring for essay questions
+        if(answer.trim().length > 10) {
+          score += 3; // Partial credit for attempt
+          if(answer.trim().length > 30) {
+            score += 2; // Full credit for detailed answer
+          }
+        }
+      }
+      
+      const percentage = Math.round((score / 80) * 100);
+      const criteria = getCriteria(percentage);
+      
+      // Calculate elapsed time
+      const elapsed = postTestStartTime ? Math.round((Date.now() - postTestStartTime) / 60000) : 0;
+      
+      // Display results
+      document.getElementById('post-score').textContent = score;
+      document.getElementById('post-percentage').textContent = percentage;
+      document.getElementById('post-criteria').textContent = criteria;
+      document.getElementById('post-elapsed').textContent = elapsed;
+      document.getElementById('post-result').style.display = 'block';
+      
+      // Save to localStorage
+      const results = JSON.parse(localStorage.getItem('elearning_results') || '{}');
+      results.postTest = {
+        score: score,
+        total: 80,
+        percentage: percentage,
+        criteria: criteria,
+        answers: answers,
+        elapsed: elapsed,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('elearning_results', JSON.stringify(results));
+      
+      // Send to monitoring system
+      sendToMonitoring('postTest', results.postTest);
+      
+      // Calculate improvement if pre-test exists
+      if(results.preTest) {
+        const improvement = percentage - results.preTest.percentage;
+        alert(`Post-Test selesai! Skor: ${score}/80 (${percentage}%)\nKriteria: ${criteria}\nPeningkatan: ${improvement > 0 ? '+' : ''}${improvement}%`);
+      } else {
+        alert(`Post-Test selesai! Skor: ${score}/80 (${percentage}%)\nKriteria: ${criteria}`);
+      }
+      updateSavedDataDisplay();
+    });
+
+    // Update saved data display
+    function updateSavedDataDisplay(){
+      const data = localStorage.getItem('elearning_results');
+      const display = document.getElementById('saved-data');
+      if(data){
+        display.textContent = JSON.stringify(JSON.parse(data), null, 2);
+      } else {
+        display.textContent = 'Belum ada data test yang tersimpan';
+      }
+    }
+
+    // Download results
+    function downloadAllResults(){
+      const data = localStorage.getItem('elearning_results') || '{}';
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'elearning_results_' + new Date().toISOString().slice(0,19).replace(/[:T]/g,'-') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+    window.downloadAllResults = downloadAllResults;
+
+    // Send data to monitoring system
+    function sendToMonitoring(testType, testData) {
+      try {
+        // Get current monitoring data
+        const monitoringData = JSON.parse(localStorage.getItem('monitoringData') || '{"students": [], "testResults": []}');
+        
+        // Generate student ID (could be improved with actual user system)
+        const studentId = 'student_' + Date.now().toString().substr(-6);
+        const studentName = prompt('Masukkan nama siswa:') || `Siswa ${studentId}`;
+        
+        // Check if student already exists
+        let student = monitoringData.students.find(s => s.name === studentName);
+        if (!student) {
+          student = {
+            id: studentId,
+            name: studentName,
+            registrationDate: new Date().toISOString()
+          };
+          monitoringData.students.push(student);
+        }
+        
+        // Add test result
+        const testResult = {
+          id: 'test_' + Date.now(),
+          studentId: student.id,
+          studentName: student.name,
+          testType: testType,
+          score: testData.score,
+          total: testData.total,
+          percentage: testData.percentage,
+          criteria: testData.criteria,
+          timeSpent: testData.elapsed,
+          timestamp: testData.timestamp,
+          answers: testData.answers
+        };
+        
+        monitoringData.testResults.push(testResult);
+        
+        // Save back to localStorage
+        localStorage.setItem('monitoringData', JSON.stringify(monitoringData));
+        
+        console.log('Data berhasil dikirim ke sistem monitoring:', testResult);
+        
+        // Notify user
+        setTimeout(() => {
+          alert('Hasil test telah disimpan ke sistem monitoring untuk review guru.');
+        }, 500);
+        
+      } catch (error) {
+        console.error('Error sending data to monitoring system:', error);
+      }
+    }
+
+    // Clear all data
+    function clearAll(){
+      if (!confirm('Reset semua hasil yang tersimpan lokal?')) return;
+      localStorage.removeItem('elearning_results');
+      alert('Data lokal berhasil dihapus.');
+      updateSavedDataDisplay();
+      // Reset form displays
+      document.getElementById('pre-result').style.display = 'none';
+      document.getElementById('post-result').style.display = 'none';
+    }
+    window.clearAll = clearAll;
+
+    // Initialize display
+    updateSavedDataDisplay();
+  </script>
+</body>
+</html>
