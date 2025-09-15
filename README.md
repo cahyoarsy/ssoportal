@@ -1,5 +1,10 @@
 # Portal SSO Kampus (Demo UI)
 
+![Deploy Status](https://github.com/cahyoarsy/ssoportal/actions/workflows/deploy-pages.yml/badge.svg)
+
+Live URL (GitHub Pages): https://cahyoarsy.github.io/ssoportal/
+
+
 Antarmuka portal Single Sign On (SSO) kampus menggunakan **React + Vite + Tailwind CSS + Framer Motion**. Proyek ini masih berupa demonstrasi front-end (belum terhubung ke backend / identity provider). Cocok sebagai dasar integrasi ke Keycloak, OAuth 2.0 services, OpenID Connect, CAS, dsb.
 
 ## Fitur Yang Sudah Ada
@@ -140,6 +145,11 @@ Hasil build default: `dist/index.html` + asset di `dist/assets/*` (hashing). Bas
 - [ ] Ganti mock JWT menjadi token sah dari backend
 - [ ] Tambahkan header keamanan (CSP, HSTS, dll) di layer server
 - [ ] Implementasi logout global + revocation actual
+
+## SEO & Akses (Tambahan)
+- `robots.txt` dan `sitemap.xml` dasar telah ditambahkan untuk memudahkan indexing.
+- Pastikan menambahkan OpenGraph image bila publik.
+
 
 
 ## Integrasi SSO (Garis Besar)

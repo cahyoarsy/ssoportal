@@ -2,7 +2,7 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [ project ]  # Ubah ke 'main' jika nanti branch utama berganti
+    branches: [ project, main ]  # Mengizinkan deployment dari project atau main
   workflow_dispatch:
 
 permissions:
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -33,6 +35,16 @@ jobs:
         run: npm run build
       - name: Postbuild (generate 404)
         run: npm run postbuild
+      - name: List dist contents (debug)
+        run: |
+          echo "--- DIST FILES ---" 
+          find dist -maxdepth 2 -type f -printf "%P (%k KB)\n" | sort
+      - name: Verify index & 404 exists
+        run: |
+          test -f dist/index.html || (echo 'index.html missing' && exit 1)
+          test -f dist/404.html || (echo '404.html missing' && exit 1)
+      - name: Embed deployment marker
+        run: echo "<!-- build-commit=${GITHUB_SHA} -->" >> dist/index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
