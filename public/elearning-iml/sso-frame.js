@@ -176,6 +176,11 @@
     });
   };
 
+  // Expose current user email (or null) for pages needing identity
+  window.SSO_getUserEmail = function(){
+    return currentPayload && currentPayload.email ? currentPayload.email : null;
+  };
+
   // Initialize
   function init() {
     announceReady();

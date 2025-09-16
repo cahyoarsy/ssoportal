@@ -75,11 +75,15 @@ export default function AppEmbed({ token, fullPage=false, immersive=false, onExi
   },[expiresAt]);
 
   // Helper kirim pesan ke iframe
+  // Kirim pesan hanya ke origin yang sesuai dengan src iframe (bukan '*')
   const postToIframe = useCallback((msg)=>{
-    if(iframeRef.current && iframeRef.current.contentWindow){
-      try { iframeRef.current.contentWindow.postMessage(msg, '*'); } catch {}
-    }
-  },[]);
+    if(!iframeRef.current || !iframeRef.current.contentWindow) return;
+    try {
+      const url = new URL(activeSrc, window.location.href);
+      const targetOrigin = url.origin;
+      iframeRef.current.contentWindow.postMessage(msg, targetOrigin);
+    } catch {}
+  },[activeSrc]);
 
   // Sinkronisasi tema saat berubah
   useEffect(()=>{ postToIframe({ type:'THEME_SYNC', dark }); },[dark, postToIframe]);
@@ -88,14 +92,20 @@ export default function AppEmbed({ token, fullPage=false, immersive=false, onExi
   useEffect(()=>{
     function onMessage(e){
       if(!e || !e.data) return;
-      const allowed = [window.location.origin, 'http://localhost:5500'];
-      if(!allowed.includes(e.origin)) return;
+      // Validasi origin pengirim = origin iframe aktif
+      try {
+        const current = new URL(activeSrc, window.location.href).origin;
+        if(e.origin !== current) return; // hanya terima dari iframe aktif
+      } catch { return; }
       if(e.data.type === 'EMBED_READY'){
         postToIframe({ type:'SSO_TOKEN', token });
         postToIframe({ type:'THEME_SYNC', dark });
         postToIframe({ type:'LAYOUT_MODE', wide });
-        // Inject origin config for stricter validation
-        postToIframe({ type:'SSO_CONFIG', allowedOrigins: allowed });
+        // Kirim konfigurasi origin yang diizinkan (hanya origin iframe saat ini)
+        try {
+          const curOrigin = new URL(activeSrc, window.location.href).origin;
+          postToIframe({ type:'SSO_CONFIG', allowedOrigins: [curOrigin] });
+        } catch {}
       } else if(e.data.type === 'SSO_TEST_RESULT'){
         // Handle test results for audit logging
         console.log('Test result received:', e.data);
@@ -107,7 +117,7 @@ export default function AppEmbed({ token, fullPage=false, immersive=false, onExi
     }
     window.addEventListener('message', onMessage);
     return ()=> window.removeEventListener('message', onMessage);
-  },[token, dark, wide, postToIframe]);
+  },[token, dark, wide, postToIframe, activeSrc]);
 
   // Lock scroll saat immersive
   useEffect(()=>{

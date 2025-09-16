@@ -40,3 +40,17 @@
 @layer utilities {
   .fade-edge { mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent); }
 }
+
+/* Print styles: focus only on profile section for PDF export */
+@media print {
+  html, body { background: #fff !important; color:#000 !important; }
+  body * { box-shadow: none !important; text-shadow: none !important; }
+  nav, header, footer, #login, #hero, #stats, #mobile-app, #testimonials, #contact, .language-toggle, .theme-toggle { display: none !important; }
+  /* Try to detect profile section by id or heading context */
+  #profile, section[id="profile"], #profil, section[id="profil"] { display: block !important; }
+  #profile, #profil { max-width: 100% !important; padding:0 1.25cm !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  @page { margin: 1.25cm; }
+  a[href]:after { content: ""; } /* remove link URLs */
+}

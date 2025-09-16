@@ -238,6 +238,27 @@ Penguatan yang disarankan sebelum produksi:
 - MFA sebaiknya opsional tapi direkomendasikan untuk peran sensitif.
 - Gunakan CSP header dan nonce untuk skrip dinamis.
 
+### Security Hardening (postMessage SSO)  
+Perubahan (Sept 2025):
+1. Portal tidak lagi mengirim `postMessage` dengan target origin `*`, melainkan origin hasil parsing dari URL iframe aktif (lihat `AppEmbed.jsx`).
+2. Portal hanya memproses pesan dari origin yang sama dengan iframe yang sedang aktif.
+3. Halaman `monitoring` mengunci (`lockedOrigin`) origin pertama yang mengirim `SSO_TOKEN` / `SSO_CONFIG` dan menolak pesan origin lain selanjutnya.
+4. Dikirimkan `SSO_CONFIG` berisi daftar origin yang diizinkan agar aplikasi anak bisa memvalidasi tambahan jika perlu.
+
+Langkah lanjutan (belum diimplementasikan):
+- Channel binding: sertakan `sessionId` acak unik di setiap `EMBED_READY` -> parent membalas dengan `SSO_TOKEN` + `sessionId` yang sama.
+- Tambah Subresource Integrity (SRI) untuk CDN (Bootstrap, jQuery, Chart.js) atau ganti ke bundling lokal.
+- Tambahkan `Content-Security-Policy` (contoh awal):
+  `default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data:; frame-ancestors 'self';` (sesuaikan kebutuhan).
+- Validasi claim token di aplikasi turunan (exp, iat, aud, iss).
+- Rotasi token & revoke melalui endpoint backend.
+
+Lokasi kode relevan:
+- `src/components/AppEmbed.jsx` (fungsi pengiriman & listener pesan)
+- `public/monitoring/index.html` (script handshake + origin lock)
+
+Untuk aplikasi baru: tambahkan script handshake mirip, kirim `EMBED_READY`, validasi origin, terapkan tema dari `THEME_SYNC`, dan simpan token di memori / sessionStorage (bukan localStorage) jika diperlukan.
+
 ## Penyesuaian Styling & Dark Mode
 - Warna utama di `tailwind.config.js` key `brand`.
 - Toggle dark mode: class `dark` pada elemen `<html>` (diatur di `App.jsx`).
@@ -249,3 +270,73 @@ Contoh UI ini bebas dimodifikasi. Pastikan dependensi tetap mengikuti lisensi ma
 
 ---
 Dibuat sebagai fondasi portal autentikasi terpadu.
+
+## (Baru) Penyimpanan Hasil E-Learning & Monitoring
+
+Perubahan September 2025:
+
+1. Format lama `localStorage.elearning_results` masih dipertahankan sebagai ringkasan terakhir (key `preTest` / `postTest`).
+2. Format baru `localStorage.elearning_results_history` (Array) menampung seluruh riwayat setiap submit dengan struktur objek:
+```
+{
+  id: string,            // unik (pre-<timestamp>-<random> / post-...)
+  type: 'preTest'|'postTest',
+  userEmail: string,     // email dari token SSO (atau 'anonymous')
+  score: number,
+  total: number,         // 80
+  percentage: number,    // 0-100
+  criteria: string,      // Sangat Baik | Baik | Cukup | Perlu Bimbingan
+  answers: { [qKey]: val }, // semua jawaban termasuk uraian
+  timestamp: ISOString
+}
+```
+3. `monitoring.js` kini membaca array ini secara incremental tanpa menghapusnya. ID yang sudah diproses dicatat di `localStorage.monitoring_processed_ids` untuk mencegah duplikasi.
+4. Mapping siswa sekarang menggunakan `userEmail` sebagai `id` stabil. Jika email tidak ada, fallback ke label `anonymous`.
+5. Aktivitas baru ditambahkan ke log dengan format ringkas (misal: `nama menyelesaikan Pre-Test (75%)`).
+
+### Backward Compatibility
+Jika hanya format lama yang ada (misal hasil dari versi sebelumnya), sistem masih akan mengonsumsi satu paket ringkasan dan menambahkan sebagai entri pseudo siswa dengan prefix `LEGACY_`.
+
+### Menghapus / Reset Data Monitoring
+Untuk mereset seluruh data terkait monitoring/dev:
+```
+localStorage.removeItem('monitoring_students');
+localStorage.removeItem('monitoring_activities');
+localStorage.removeItem('monitoring_processed_ids');
+localStorage.removeItem('elearning_results_history');
+localStorage.removeItem('elearning_results');
+```
+
+## (Perubahan) Penghapusan Aplikasi Demo Awal
+
+Daftar aplikasi yang di-embed kini disederhanakan hanya:
+- `E-Learning IML`
+- `Monitoring Guru`
+
+Entri awal `proyek1` dan `demo2` dihapus dari daftar `APPS` di `src/App.jsx` untuk fokus pada dua modul inti.
+
+Jika ingin menambah kembali aplikasi baru, cukup tambahkan objek:
+```
+{ id: 'nama-app', name: 'Nama App', path: 'nama-app/index.html', hashBase: '' }
+```
+ke array `APPS` dan letakkan folder di `public/`.
+
+## (Baru) Section Profil / CV
+
+Portal kini menyertakan section `Profil & CV` (bilingual) untuk menampilkan informasi personal / profesional.
+
+Lokasi kode: `src/components/Profile.jsx`.
+
+Fitur:
+- Dual bahasa (Indonesia + English) dalam satu komponen.
+- Ringkasan, motivasi, target, skills (badge), kontak, tombol unduh CV.
+- Foto otomatis memuat dari `public/profile.jpg` (jika ada). Jika belum tersedia ditampilkan placeholder gradient.
+- Tombol "Unduh CV" menunjuk ke `public/cv.pdf` (ganti dengan file CV asli Anda).
+
+Cara kustomisasi cepat:
+1. Ganti isi objek `profileData` di `Profile.jsx` (nama, email, tautan GitHub/LinkedIn, narasi, skills).
+2. Replace file `public/profile.jpg` dengan foto asli (ukuran rasio 3:4 direkomendasikan).
+3. Replace file `public/cv.pdf` dengan CV resmi Anda.
+4. Jika ingin satu bahasa saja — hapus blok English atau komentari bagian yang tidak diperlukan.
+
+Jika tidak ingin menampilkan profil di landing, hapus impor dan penggunaan `<Profile />` di `App.jsx`.

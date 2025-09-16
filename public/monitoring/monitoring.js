@@ -5,6 +5,8 @@ class MonitoringSystem {
         this.testResults = JSON.parse(localStorage.getItem('monitoring_results') || '{}');
         this.currentSection = 'dashboard';
         this.charts = {};
+        // Track processed result IDs to avoid duplicate ingestion
+        this.processedIds = new Set(JSON.parse(localStorage.getItem('monitoring_processed_ids') || '[]'));
         
         this.init();
     }
@@ -56,26 +58,64 @@ class MonitoringSystem {
     }
 
     checkForNewResults() {
-        // Cek apakah ada data baru dari e-learning standalone
-        const elearningResults = JSON.parse(localStorage.getItem('elearning_results') || '{}');
-        
-        if (Object.keys(elearningResults).length > 0) {
-            // Generate student ID based on timestamp or session
-            const studentId = this.generateStudentId();
-            const studentName = this.generateStudentName();
-            
-            const studentData = {
+        // Legacy single object support (backward compatibility)
+        const legacy = JSON.parse(localStorage.getItem('elearning_results') || '{}');
+        if (Object.keys(legacy).length > 0) {
+            const pseudoEmail = legacy.preTest?.userEmail || legacy.postTest?.userEmail || null;
+            const baseName = pseudoEmail ? pseudoEmail.split('@')[0] : this.generateStudentName();
+            const studentId = 'LEGACY_' + (pseudoEmail || this.generateStudentId());
+            const data = {
                 id: studentId,
-                name: studentName,
+                name: baseName,
                 timestamp: new Date().toISOString(),
-                preTest: elearningResults.preTest || null,
-                postTest: elearningResults.postTest || null
+                preTest: legacy.preTest || null,
+                postTest: legacy.postTest || null
             };
-
-            this.addTestResult(studentData);
-            
-            // Clear the e-learning results to prevent duplicate processing
+            this.addTestResult(data);
+            // Don't remove anymore to allow other systems, but clear to keep old behavior minimal
             localStorage.removeItem('elearning_results');
+        }
+
+        // New history array ingestion
+        const history = JSON.parse(localStorage.getItem('elearning_results_history') || '[]');
+        if (Array.isArray(history) && history.length) {
+            let newProcessed = false;
+            history.forEach(entry => {
+                if (!entry || !entry.id || this.processedIds.has(entry.id)) return;
+                // Map userEmail to student (stable)
+                const email = entry.userEmail || 'anonymous';
+                const existingStudent = this.students.find(s => s.id === email);
+                const studentRecord = existingStudent || {
+                    id: email,
+                    name: email.includes('@') ? email.split('@')[0] : email,
+                    preTest: null,
+                    postTest: null,
+                    registeredAt: entry.timestamp
+                };
+                if (!existingStudent) this.students.push(studentRecord);
+                const testPayload = {
+                    score: entry.score,
+                    total: entry.total,
+                    percentage: entry.percentage,
+                    criteria: entry.criteria,
+                    timestamp: entry.timestamp,
+                    answers: entry.answers || null
+                };
+                if (entry.type === 'preTest') {
+                    studentRecord.preTest = testPayload;
+                    this.addActivity(`${studentRecord.name} menyelesaikan Pre-Test (${entry.percentage}%)`);
+                } else if (entry.type === 'postTest') {
+                    studentRecord.postTest = testPayload;
+                    this.addActivity(`${studentRecord.name} menyelesaikan Post-Test (${entry.percentage}%)`);
+                }
+                this.processedIds.add(entry.id);
+                newProcessed = true;
+            });
+            if (newProcessed) {
+                localStorage.setItem('monitoring_students', JSON.stringify(this.students));
+                localStorage.setItem('monitoring_processed_ids', JSON.stringify(Array.from(this.processedIds)));
+                this.refreshCurrentSection();
+            }
         }
     }
 

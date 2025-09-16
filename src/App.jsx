@@ -7,51 +7,15 @@ import Stats from './components/Stats.jsx';
 import MobileApp from './components/MobileApp.jsx';
 import Testimonials from './components/Testimonials.jsx';
 import Contact from './components/Contact.jsx';
+import Profile from './components/Profile.jsx';
 import Footer from './components/Footer.jsx';
 import AppEmbed from './components/AppEmbed.jsx';
 
-// Komponen kecil untuk menampilkan audit log terakhir
-function AuditLogList({ readAudit }){
-  const events = readAudit().slice(-10).reverse();
-  if(!events.length) return (
-    <div className="mt-4 border rounded-lg p-4 bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-sm">Belum ada event audit.</div>
-  );
-  return (
-    <div className="mt-6 w-full">
-      <h4 className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 flex items-center gap-2">Audit Log <span className="text-[10px] font-normal text-slate-400">(last {events.length})</span></h4>
-      <div className="overflow-x-auto border rounded-lg bg-white dark:bg-slate-900/60">
-        <table className="min-w-full text-xs">
-          <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300">
-            <tr>
-              <th className="text-left px-3 py-2 font-medium">Waktu</th>
-              <th className="text-left px-3 py-2 font-medium">Type</th>
-              <th className="text-left px-3 py-2 font-medium">Email</th>
-              <th className="text-left px-3 py-2 font-medium">Role</th>
-              <th className="text-left px-3 py-2 font-medium">JTI</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-            {events.map((e,i)=>(
-              <tr key={i} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-                <td className="px-3 py-1.5 whitespace-nowrap text-slate-500 dark:text-slate-400">{new Date(e.ts).toLocaleTimeString()}</td>
-                <td className="px-3 py-1.5 font-medium uppercase tracking-wide text-[11px] text-slate-700 dark:text-slate-200">{e.type}</td>
-                <td className="px-3 py-1.5 text-slate-600 dark:text-slate-300">{e.email || '-'}</td>
-                <td className="px-3 py-1.5 text-slate-600 dark:text-slate-300">{e.role || '-'}</td>
-                <td className="px-3 py-1.5 font-mono text-[10px] text-slate-500 dark:text-slate-400" title={e.jti || ''}>{e.jti ? e.jti.slice(0,8)+'...' : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 
 // Konfigurasi multi-aplikasi terintegrasi
 const APPS = [
-  { id: 'proyek1', name: 'Proyek1', path: 'proyek1/index.html', hashBase: '#home' },
-  { id: 'demo2', name: 'Demo App 2', path: 'demo2/index.html', hashBase: '#start' },
-  { id: 'elearning-iml', name: 'E-Learning IML', path: 'elearning-iml/index.html', hashBase: '' }
+  { id: 'elearning-iml', name: 'E-Learning IML', path: 'elearning-iml/index.html', hashBase: '' },
+  { id: 'monitoring', name: 'Monitoring Guru', path: 'monitoring/index.html', hashBase: '' }
 ];
 
 function App(){
@@ -60,26 +24,17 @@ function App(){
   const [selectedApp, setSelectedApp] = useState(APPS[0].id);
   const [dark, setDark] = useState(false);
   const [immersive, setImmersive] = useState(true); // default masuk immersive setelah login
+  const [lang, setLang] = useState('id'); // 'id' | 'en'
   const [wide, setWide] = useState(true); // global wide layout state
   const TOKEN_KEY = 'sso-jwt';
-  const AUDIT_KEY = 'sso-audit-log';
+  // Audit log removed as per simplification request
   const refreshTimerRef = useRef(null);
 
   // Whitelist origin (dev + same-origin)
   const ALLOWED_ORIGINS = [window.location.origin, 'http://localhost:5500'];
 
   // ----- Audit Log Helpers -----
-  function readAudit(){
-    try { return JSON.parse(localStorage.getItem(AUDIT_KEY) || '[]'); } catch { return []; }
-  }
-  function writeAudit(list){
-    try { localStorage.setItem(AUDIT_KEY, JSON.stringify(list.slice(-50))); } catch {}
-  }
-  function pushAudit(evt){
-    const list = readAudit();
-    list.push({ ts: Date.now(), ...evt });
-    writeAudit(list);
-  }
+  // Stubbed no-op functions removed
 
   // Helper decode JWT payload
   function decodePayload(tok){
@@ -134,12 +89,14 @@ function App(){
     return ()=> { if(refreshTimerRef.current){ clearTimeout(refreshTimerRef.current); } };
   },[ssoToken]);
 
-  // Restore token & preferences on mount
+  // Restore token & preferences on mount (including language)
   useEffect(()=>{
     try {
       const savedPref = localStorage.getItem('pref-dark');
       if (savedPref !== null) setDark(savedPref === 'true');
       else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setDark(true);
+      const savedLang = localStorage.getItem('pref-lang');
+      if(savedLang === 'id' || savedLang === 'en') setLang(savedLang);
     } catch {}
 
     const saved = sessionStorage.getItem(TOKEN_KEY);
@@ -166,7 +123,7 @@ function App(){
     sessionStorage.setItem(TOKEN_KEY, token);
     const payload = decodePayload(token);
     setIsAdmin(!!payload && payload.role === 'admin');
-    if(payload){ pushAudit({ type:'login', email: payload.email, role: payload.role, jti: payload.jti }); }
+  // audit removed
     setImmersive(true);
     requestAnimationFrame(()=> window.scrollTo({ top:0, behavior:'smooth' }));
   }
@@ -175,13 +132,13 @@ function App(){
     setSsoToken(null);
     setIsAdmin(false);
     sessionStorage.removeItem(TOKEN_KEY);
-    pushAudit({ type:'logout', reason:'user', email: undefined, role: undefined });
+  // audit removed
     setImmersive(false);
   }
 
   function revokeSession(){
     const payload = decodePayload(ssoToken);
-    pushAudit({ type:'revoke', email: payload?.email, role: payload?.role, jti: payload?.jti });
+  // audit removed
     exitEmbedded();
   }
 
@@ -210,10 +167,15 @@ function App(){
   function openImmersive(){ setImmersive(true); }
   function minimizeImmersive(){ setImmersive(false); }
 
+  // Persist language when changed
+  useEffect(()=>{
+    try { localStorage.setItem('pref-lang', lang); } catch {}
+  },[lang]);
+
   if (ssoToken){
     return (
       <>
-        <Navbar dark={dark} setDark={setDark} />
+  <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} />
         <AnimatePresence>
           {immersive && (
             <motion.div key="immersive"
@@ -255,33 +217,11 @@ function App(){
                 >
                   {APPS.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
-                <button onClick={openImmersive} className="btn-primary px-5 py-2 text-sm">Buka Mode Immersive</button>
-                <button onClick={exitEmbedded} className="btn-outline px-5 py-2 text-sm">Logout</button>
+                <button onClick={openImmersive} className="btn-primary px-5 py-2 text-sm">Buka Aplikasi</button>
+                <button onClick={exitEmbedded} className="btn-outline px-5 py-2 text-sm">Keluar</button>
               </div>
             </section>
-            <section className="grid md:grid-cols-2 gap-8">
-              <div className="card p-6 flex flex-col gap-3">
-                <h3 className="font-semibold">Apa itu Mode Immersive?</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">Mode ini menyembunyikan portal dan menampilkan aplikasi terpilih memenuhi layar dengan overlay kontrol minimal (selector, dark toggle, logout, minimize/restore).</p>
-              </div>
-              <div className="card p-6 flex flex-col gap-3">
-                <h3 className="font-semibold">Sinkronisasi Tema</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300">Saat Anda mengubah tema portal, aplikasi di iframe menerima pesan dan dapat menerapkan tema seragam (kelas <code>dark-sso</code> / <code>light-sso</code>).</p>
-              </div>
-              {isAdmin && (
-                <div className="card p-6 flex flex-col gap-4 md:col-span-2">
-                  <h3 className="font-semibold text-amber-600 flex items-center gap-2">Panel Admin <span className="text-[10px] font-normal uppercase tracking-wide bg-amber-100 text-amber-700 px-2 py-0.5 rounded">role: admin</span></h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">Fitur ini hanya tampil untuk token dengan claim <code>role=admin</code>. Letakkan manajemen user, audit log, revoke token, dsb di sini.</p>
-                  <div className="flex flex-wrap gap-3">
-                    <button type="button" onClick={()=> refreshToken(ssoToken)} className="px-4 py-2 rounded-md text-sm bg-amber-600 hover:bg-amber-500 text-white">Perbarui Token Manual</button>
-                    <button type="button" onClick={()=> { document.querySelectorAll('iframe').forEach(f=>{ try { f.contentWindow.postMessage({ type:'THEME_SYNC', dark }, '*'); } catch {} }); }} className="px-4 py-2 rounded-md text-sm bg-slate-700 hover:bg-slate-600 text-white">Sinkronisasi Tema Paksa</button>
-                    <button type="button" onClick={()=> { const payload = decodePayload(ssoToken); alert('Payload JWT (mock):\n'+ JSON.stringify(payload,null,2)); }} className="px-4 py-2 rounded-md text-sm bg-slate-500 hover:bg-slate-400 text-white">Lihat Payload</button>
-                    <button type="button" onClick={revokeSession} className="px-4 py-2 rounded-md text-sm bg-red-600 hover:bg-red-500 text-white">Revoke Session</button>
-                  </div>
-                  <AuditLogList readAudit={readAudit} />
-                </div>
-              )}
-            </section>
+            {/* Removed extra explanatory & admin/audit sections per simplification request */}
           </main>
         )}
       </>
@@ -290,16 +230,17 @@ function App(){
 
   return (
     <>
-  <Navbar dark={dark} setDark={setDark} />
+  <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} />
       <main className="flex flex-col gap-24">
-        <Hero />
+        <Hero lang={lang} />
         <section id="login" className="container-section scroll-mt-24">
-          <LoginForm onSSOLogin={handleSSOLogin} />
+          <LoginForm onSSOLogin={handleSSOLogin} lang={lang} />
         </section>
         <Stats />
         <MobileApp />
-        <Testimonials />
-        <Contact />
+  <Testimonials lang={lang} />
+  <Profile lang={lang} />
+  <Contact lang={lang} />
       </main>
       <Footer />
     </>

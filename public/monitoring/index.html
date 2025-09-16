@@ -560,5 +560,39 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="monitoring.js"></script>
+        <!-- SSO Handshake Script: memungkinkan halaman ini menerima token & tema dari portal induk -->
+            <script>
+                (function(){
+                    let lockedOrigin = null;
+                    function sendReady(){
+                        try { parent && parent.postMessage({ type: 'EMBED_READY' }, '*'); } catch(e) {}
+                    }
+                    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                        setTimeout(sendReady, 50);
+                    } else {
+                        document.addEventListener('DOMContentLoaded', ()=> setTimeout(sendReady,50));
+                    }
+                    window.addEventListener('message', (e)=>{
+                        if(!e || !e.data) return;
+                        const d = e.data;
+                        // Lock origin on first valid token/config
+                        if(!lockedOrigin && (d.type === 'SSO_TOKEN' || d.type === 'SSO_CONFIG')){
+                            lockedOrigin = e.origin;
+                        }
+                        if(lockedOrigin && e.origin !== lockedOrigin) return; // reject other origins
+                        if (d.type === 'SSO_TOKEN') {
+                            try { sessionStorage.setItem('sso_token', d.token); } catch(err) {}
+                            console.log('[Monitoring SSO] Token diterima dari', e.origin);
+                        } else if (d.type === 'THEME_SYNC') {
+                            document.documentElement.classList.toggle('dark-sso', !!d.dark);
+                            document.documentElement.classList.toggle('light-sso', !d.dark);
+                        } else if (d.type === 'LAYOUT_MODE') {
+                            document.documentElement.setAttribute('data-layout-wide', d.wide ? 'true':'false');
+                        } else if (d.type === 'SSO_CONFIG' && Array.isArray(d.allowedOrigins)) {
+                            // Optional: could cross-check e.origin in d.allowedOrigins
+                        }
+                    });
+                })();
+            </script>
 </body>
 </html>
