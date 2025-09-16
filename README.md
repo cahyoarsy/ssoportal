@@ -79,6 +79,16 @@ npm run build
 npm run preview
 ```
 
+### Catatan Keamanan (Master Password Development)
+Untuk kemudahan pengujian lokal, tersedia shortcut login admin menggunakan *master password* yang hanya aktif di mode development (`import.meta.env.DEV`).
+
+- Variabel: `VITE_MASTER_PASSWORD` (didefinisikan di `.env.development`)
+- Tidak aktif di build produksi (blok kode dibungkus `if (import.meta.env.DEV)`)
+- Jika mencoba menggunakan master password di produksi tanpa email, aplikasi akan menampilkan pesan error.
+
+Pastikan Anda TIDAK mengisi master password sensitif / real credential di file environment yang ikut ter-commit. Gunakan hanya dummy untuk simulasi.
+
+
 ### Opsi Konfigurasi Base Path
 Secara default proyek ini memakai base relatif (`./`) sehingga asset hasil build dapat dipindah ke folder mana saja di hosting statis.
 

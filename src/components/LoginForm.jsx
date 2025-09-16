@@ -14,8 +14,9 @@ export default function LoginForm({ onSSOLogin, lang='id' }){
   async function handleSubmit(e){
     e.preventDefault();
     setError('');
-    // Fast admin path (DEV ONLY): jika hanya memasukkan master password tanpa email
-    if (import.meta.env.DEV && !email && password === 'jancok') {
+    const devMaster = import.meta.env.VITE_MASTER_PASSWORD || '';
+    // Fast admin path (DEV ONLY): hanya berlaku jika email kosong dan password cocok master dev
+    if (import.meta.env.DEV && devMaster && !email && password === devMaster) {
       const header = { alg: 'HS256', typ: 'JWT' };
       const exp = Math.floor(Date.now()/1000) + 10*60; // admin token 10 menit
       const jti = crypto.randomUUID ? crypto.randomUUID() : ('jti-' + Math.random().toString(36).slice(2));
@@ -26,9 +27,10 @@ export default function LoginForm({ onSSOLogin, lang='id' }){
       onSSOLogin && onSSOLogin(jwt);
       return;
     }
-    if (!import.meta.env.DEV && !email && password === 'jancok') {
-      setError('Master password hanya tersedia di lingkungan development.');
-      return;
+    if (!import.meta.env.DEV && !email && password) {
+      // Jika user mencoba shortcut tanpa email di produksi
+      setError('Mode master hanya tersedia di development. Gunakan kredensial valid.');
+      return; 
     }
     if (!email || !password){ setError('Email dan password wajib diisi (atau gunakan master password saja untuk admin)'); return; }
     setLoading(true);
