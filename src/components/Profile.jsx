@@ -12,7 +12,7 @@ import { t } from '../langResources.js';
 */
 
 const profileData = {
-  name: 'M. Cahyo Sangsongko Arsy',
+  name: 'M. Cahyo  Arsy',
   tagline: {
     id: 'Mahasiswa Teknik Elektro – Universitas Negeri Surabaya',
     en: 'Electrical Engineering Student – State University of Surabaya'
@@ -33,7 +33,7 @@ const profileData = {
     'Dasar Instalasi Listrik', 'Motor Listrik', 'Pemahaman Rewinding (awal)', 'Perakitan Perangkat', 'Troubleshooting Dasar', 'Keselamatan Kerja (K3)', 'Kemauan Belajar Tinggi'
   ],
   contacts: {
-    email: 'mcahyosangsongko@gmail.com',
+    email: 'mcahyo@gmail.com',
     github: 'https://github.com/cahyoarsy',
     linkedin: '#'
   }

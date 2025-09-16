@@ -11,7 +11,7 @@ export default function ContactForm({ lang='id' }) {
     e.preventDefault();
   if(!name || !email || !message){ setStatus({ type:'err', msg: t(lang,'contactForm.required') }); return; }
     // Fallback mailto (bisa diganti endpoint backend nanti)
-  const mailto = `mailto:mcahyosangsongko@gmail.com?subject=${encodeURIComponent('[Program] Pesan dari '+name)}&body=${encodeURIComponent(message+'\n\nEmail: '+email)}`;
+  const mailto = `mailto:mcahyo@gmail.com?subject=${encodeURIComponent('[Program] Pesan dari '+name)}&body=${encodeURIComponent(message+'\n\nEmail: '+email)}`;
     window.location.href = mailto;
   setStatus({ type:'ok', msg: lang==='id'?'Membuka aplikasi email...':'Opening email client...' });
   }

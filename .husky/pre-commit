@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+node scripts/precommit-lint.cjs
+echo "Running tests (fast)"
+npx vitest run --reporter basic --passWithNoTests

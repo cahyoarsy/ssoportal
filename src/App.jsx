@@ -12,10 +12,10 @@ import Footer from './components/Footer.jsx';
 import AppEmbed from './components/AppEmbed.jsx';
 
 
-// Konfigurasi multi-aplikasi terintegrasi
+// Konfigurasi multi-aplikasi terintegrasi (monitoring hanya untuk admin)
 const APPS = [
   { id: 'elearning-iml', name: 'E-Learning IML', path: 'elearning-iml/index.html', hashBase: '' },
-  { id: 'monitoring', name: 'Monitoring Guru', path: 'monitoring/index.html', hashBase: '' }
+  { id: 'monitoring', name: 'Monitoring Guru (Admin)', path: 'monitoring/index.html', hashBase: '', adminOnly: true }
 ];
 
 function App(){
@@ -103,11 +103,10 @@ function App(){
     if (saved) {
       // Basic decode & exp check (no signature here; signature verified originally on issuance)
       try {
-        const [,payload] = saved.split('.');
-        const json = JSON.parse(atob(payload.replace(/-/g,'+').replace(/_/g,'/')));
-        if (json.exp * 1000 > Date.now()) {
+        const payload = decodePayload(saved);
+        if (payload && payload.exp * 1000 > Date.now()) {
           setSsoToken(saved);
-          setIsAdmin(json.role === 'admin');
+          setIsAdmin(payload.role === 'admin');
           setImmersive(false); // mulai dalam mode portal dahulu setelah refresh
         } else {
           sessionStorage.removeItem(TOKEN_KEY);
@@ -122,7 +121,13 @@ function App(){
     setSsoToken(token);
     sessionStorage.setItem(TOKEN_KEY, token);
     const payload = decodePayload(token);
-    setIsAdmin(!!payload && payload.role === 'admin');
+    const admin = !!payload && payload.role === 'admin';
+    setIsAdmin(admin);
+    // Jika sebelumnya memilih monitoring tapi bukan admin -> reset ke app pertama
+    if(!admin){
+      const sel = APPS.find(a=>a.id===selectedApp);
+      if(sel && sel.adminOnly){ setSelectedApp(APPS[0].id); }
+    }
   // audit removed
     setImmersive(true);
     requestAnimationFrame(()=> window.scrollTo({ top:0, behavior:'smooth' }));
@@ -172,6 +177,15 @@ function App(){
     try { localStorage.setItem('pref-lang', lang); } catch {}
   },[lang]);
 
+  // Derive list of apps allowed for current role
+  const visibleApps = isAdmin ? APPS : APPS.filter(a=>!a.adminOnly);
+
+  const selectedAppObj = APPS.find(a=>a.id===selectedApp);
+  if(selectedAppObj && selectedAppObj.adminOnly && !isAdmin){
+    // Safety guard (should have been filtered earlier)
+    setSelectedApp(visibleApps[0]?.id || APPS[0].id);
+  }
+
   if (ssoToken){
     return (
       <>
@@ -191,7 +205,7 @@ function App(){
                 onExit={exitEmbedded}
                 onMinimize={minimizeImmersive}
                 app={selectedApp}
-                apps={APPS}
+                apps={visibleApps}
                 onSelectApp={setSelectedApp}
                 dark={dark}
                 setDark={setDark}
@@ -215,10 +229,13 @@ function App(){
                   onChange={e=> setSelectedApp(e.target.value)}
                   className="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100"
                 >
-                  {APPS.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  {visibleApps.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
                 <button onClick={openImmersive} className="btn-primary px-5 py-2 text-sm">Buka Aplikasi</button>
                 <button onClick={exitEmbedded} className="btn-outline px-5 py-2 text-sm">Keluar</button>
+                {!isAdmin && APPS.some(a=>a.adminOnly) && (
+                  <span className="text-xs text-slate-400">Login admin diperlukan untuk akses Monitoring.</span>
+                )}
               </div>
             </section>
             {/* Removed extra explanatory & admin/audit sections per simplification request */}

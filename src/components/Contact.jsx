@@ -21,7 +21,7 @@ export default function Contact({ lang='id' }){
             <div className="card p-5 flex flex-col gap-3">
               <span className="badge">Email</span>
               <p className="text-sm text-slate-600">{t(lang,'contact.emailDesc')}</p>
-              <a href="mailto:mcahyosangsongko@gmail.com" className="btn px-4 py-2 text-sm text-center">{t(lang,'contact.sendEmail')}</a>
+              <a href="mailto:mcahyo@gmail.com" className="btn px-4 py-2 text-sm text-center">{t(lang,'contact.sendEmail')}</a>
             </div>
             <div className="card p-5 flex flex-col gap-3">
               <span className="badge">{t(lang,'contact.office')}</span>

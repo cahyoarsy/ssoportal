@@ -79,15 +79,53 @@ npm run build
 npm run preview
 ```
 
-### Catatan Keamanan (Master Password Development)
-Untuk kemudahan pengujian lokal, tersedia shortcut login admin menggunakan *master password* yang hanya aktif di mode development (`import.meta.env.DEV`).
+### Pembatasan Email Login
+Form login saat ini hanya menerima:
+- Email dengan domain `@gmail.com`, atau
+- Email yang sudah pernah berhasil digunakan sebelumnya (disimpan di `localStorage.used-emails`).
 
-- Variabel: `VITE_MASTER_PASSWORD` (didefinisikan di `.env.development`)
-- Tidak aktif di build produksi (blok kode dibungkus `if (import.meta.env.DEV)`)
-- Jika mencoba menggunakan master password di produksi tanpa email, aplikasi akan menampilkan pesan error.
+Tujuan: simulasi whitelist sederhana tanpa backend. Untuk menghapus pembatasan, modifikasi fungsi `isAllowedEmail` di `src/components/LoginForm.jsx`.
 
-Pastikan Anda TIDAK mengisi master password sensitif / real credential di file environment yang ikut ter-commit. Gunakan hanya dummy untuk simulasi.
+### Integrasi Google OAuth (Front-End Demo)
+Tombol "Masuk dengan Google" sekarang melakukan redirect ke endpoint otorisasi Google. Diperlukan env:
+```
+VITE_GOOGLE_CLIENT_ID=xxxxxxxxxxxx-abcdef1234567890.apps.googleusercontent.com
+VITE_GOOGLE_REDIRECT_URI=http://localhost:5173
+```
+Jika `VITE_GOOGLE_REDIRECT_URI` tidak diset, fallback otomatis ke `http://localhost:5173`.
 
+**PENTING - Setup Google Console:**
+1. Buka [Google Cloud Console](https://console.developers.google.com/)
+2. Pilih/buat project → APIs & Services → Credentials
+3. Create OAuth 2.0 Client ID (Web application)
+4. **Authorized redirect URIs** harus EXACT match:
+   ```
+   http://localhost:5173
+   http://127.0.0.1:5173
+   ```
+   ⚠️ **Error `redirect_uri_mismatch` terjadi jika URI tidak exact match!**
+
+5. Enable **Google+ API** atau **Google Identity** di APIs & Services → Library
+
+**Troubleshooting redirect_uri_mismatch:**
+- Pastikan tidak ada trailing slash: ✅ `http://localhost:5173` ❌ `http://localhost:5173/`
+- Pastikan protocol exact: `http://` vs `https://`
+- Pastikan port exact: `5173` vs `3000`
+- Check browser console untuk "Redirect URI" yang digunakan
+
+Alur demo:
+1. Generate `state` acak disimpan di `sessionStorage`.
+2. Redirect user ke Google dengan scope `openid email profile`.
+3. Google mengembalikan `code` ke halaman utama (`http://localhost:5173?code=...`).
+4. Halaman utama mendeteksi parameter `code` dan simulates OAuth login otomatis.
+
+Langkah produksi (harus backend):
+1. Tambahkan PKCE (code_verifier & code_challenge) saat build URL.
+2. Backend tukar `code` → `access_token` + `id_token` (verifikasi signature & nonce).
+3. Backend buat session (cookie HttpOnly) lalu redirect kembali ke portal tanpa query sensitif.
+4. Front-end panggil endpoint profil (`/api/me`).
+
+Lokasi kode terkait: `src/oauthHelpers.js`, handler `handleGoogle` dan `handleOAuthCallback` di `LoginForm.jsx`.
 
 ### Opsi Konfigurasi Base Path
 Secara default proyek ini memakai base relatif (`./`) sehingga asset hasil build dapat dipindah ke folder mana saja di hosting statis.
