@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitoring Guru (Integrations)</title>
+    <style>
+      :root { --bg:#0b1020; --card:#121a2b; --text:#e5e7eb; --accent:#22d3ee; }
+      body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans; background: var(--bg); color: var(--text); }
+      .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+      .card { background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+      header.card { display:flex; justify-content:space-between; align-items:center; }
+      .grid { display:grid; gap: 1rem; grid-template-columns: 1fr; }
+      @media (min-width: 1024px) { .grid { grid-template-columns: 2fr 1fr; } }
+      table { width:100%; border-collapse: collapse; font-size:.95rem; }
+      th, td { border-bottom: 1px solid rgba(255,255,255,.08); padding: .5rem .6rem; text-align:left; }
+      th { color:#a5b4fc; }
+      .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.45rem .75rem; border-radius:8px; border:1px solid rgba(255,255,255,.12); color:var(--text); text-decoration:none; background: rgba(255,255,255,.03); }
+      .btn:hover { background: rgba(255,255,255,.06); }
+      #sso-top { position: sticky; top: 0; display:flex; align-items:center; justify-content:space-between; gap:.75rem; background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.35); color: #38bdf8; padding: .5rem .75rem; margin-bottom: 1rem; border-radius: 10px; transform: translateY(-6px); opacity: .9; transition: all .3s ease; z-index: 50; }
+      #sso-top.error { background: rgba(220, 38, 38, .12); border-color: rgba(220,38,38,.45); color: #ef4444; }
+    </style>
+  </head>
+  <body>
+    <div id="sso-top">
+      <div style="display:flex;gap:.6rem;align-items:center">
+        <strong>SSO</strong>
+        <span id="sso-status">INIT</span>
+        <span id="sso-user" class="badge">-</span>
+        <span id="sso-role" class="badge"></span>
+      </div>
+      <a id="sso-logout" href="#" class="btn">Keluar</a>
+    </div>
+
+    <div class="container">
+      <header class="card">
+        <div>
+          <h1 style="margin:.2rem 0">Monitoring Guru</h1>
+          <p style="opacity:.8;margin:0">Pemantauan aktivitas belajar dan hasil evaluasi.</p>
+        </div>
+        <div>
+          <a class="btn" href="../../">Kembali ke Portal</a>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <h3 style="margin-top:0">Daftar Siswa</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Kelas</th>
+                <th>Pre-Test</th>
+                <th>Post-Test</th>
+                <th>Aktivitas</th>
+              </tr>
+            </thead>
+            <tbody id="studentTable">
+            </tbody>
+          </table>
+        </section>
+        <aside class="card">
+          <h3 style="margin-top:0">Ringkasan</h3>
+          <div id="summary"></div>
+          <div style="margin-top:1rem; display:flex; gap:.5rem; flex-wrap:wrap">
+            <button class="btn" id="btnExport">Export CSV</button>
+            <label class="btn" style="cursor:pointer">
+              Import CSV
+              <input id="fileImport" type="file" accept=".csv" style="display:none"/>
+            </label>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script src="./monitoring.js"></script>
+  </body>
+  </html>
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0; url=../../monitoring/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Redirecting…</title>
+    <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;height:100vh;margin:0} .card{background:rgba(255,255,255,.06);padding:24px 28px;border-radius:12px;border:1px solid rgba(255,255,255,.12)} a{color:#93c5fd}</style>
+    <script>
+      (function(){
+        try{
+          var parts = location.pathname.split('/');
+          var idx = parts.lastIndexOf('integrations');
+          var base = idx>0 ? parts.slice(0, idx).join('/')+'/' : '/';
+          location.replace(base + 'monitoring/');
+        }catch(e){ /* fallback to meta refresh */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="card">
+      <div>Memuat Monitoring… Jika tidak dialihkan otomatis, klik <a href="../../monitoring/">di sini</a>.</div>
+    </div>
+  </body>
+</html>
