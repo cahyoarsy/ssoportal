@@ -3,9 +3,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, project ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, project ]
 
 # Set permissions untuk GitHub token
 permissions:
