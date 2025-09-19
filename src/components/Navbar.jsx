@@ -17,12 +17,13 @@ export default function Navbar({ dark, setDark, lang, setLang, isAdmin }){
   const [open, setOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/80 border-b border-gray-200/50 shadow-sm">
-      <div className="container-section flex items-center justify-between h-20">
-        <a href="#home" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200">
-            <Icon name="brand" size={22} className="text-white" strokeWidth={2} />
+      <div className="container-section flex items-center justify-between h-16 md:h-20">
+        <a href="#home" className="flex items-center gap-2 md:gap-3 group">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200">
+            <Icon name="brand" size={18} className="text-white md:hidden" strokeWidth={2} />
+            <Icon name="brand" size={22} className="text-white hidden md:block" strokeWidth={2} />
           </div>
-          <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="font-bold text-lg md:text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             {PROGRAM_SHORT}
           </span>
         </a>
@@ -60,17 +61,61 @@ export default function Navbar({ dark, setDark, lang, setLang, isAdmin }){
             </Button>
           </div>
         </div>
-        <Button variant="secondary" size="md" className="md:hidden" onClick={()=>setOpen(o=>!o)} aria-label="Toggle menu">
-          <Icon name="menu" />
+        
+        {/* Mobile menu button with improved touch target */}
+        <Button 
+          variant="ghost" 
+          size="md" 
+          className="md:hidden p-3 -mr-3" 
+          onClick={()=>setOpen(o=>!o)} 
+          aria-label="Toggle menu"
+        >
+          <Icon name={open ? "x" : "menu"} size={20} className="text-gray-700" />
         </Button>
       </div>
+      
+      {/* Enhanced mobile menu */}
       <AnimatePresence>
         {open && (
-          <motion.div initial={{height:0, opacity:0}} animate={{height:'auto', opacity:1}} exit={{height:0, opacity:0}} className="md:hidden overflow-hidden border-b border-slate-100 bg-white">
-            <div className="container-section py-4 flex flex-col gap-2">
-              {baseLinks.map(l => <a key={l.href} href={l.href} onClick={(e)=>{ handleAnchorClick(e, l.href); setOpen(false); }} className="py-2 text-slate-600 hover:text-brand-600">{t(lang, l.key)}</a>)}
-              <button type="button" onClick={()=> { setDark && setDark(d=>!d); setOpen(false); }} className="mt-2 text-left text-slate-600 hover:text-brand-600 py-2">{dark? 'Mode Terang':'Mode Gelap'}</button>
-              <button type="button" onClick={()=> { setLang && setLang(l=> l==='id' ? 'en' : 'id'); setOpen(false); }} className="text-left text-slate-600 hover:text-brand-600 py-2">Bahasa: {lang==='id'? 'ID':'EN'}</button>
+          <motion.div 
+            initial={{height:0, opacity:0}} 
+            animate={{height:'auto', opacity:1}} 
+            exit={{height:0, opacity:0}} 
+            transition={{duration: 0.2, ease: "easeInOut"}}
+            className="md:hidden overflow-hidden border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-lg"
+          >
+            <div className="container-section py-6 flex flex-col gap-1">
+              {baseLinks.map(l => (
+                <a 
+                  key={l.href} 
+                  href={l.href} 
+                  onClick={(e)=>{ handleAnchorClick(e, l.href); setOpen(false); }} 
+                  className="py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium"
+                >
+                  {t(lang, l.key)}
+                </a>
+              ))}
+              
+              {/* Mobile controls */}
+              <div className="border-t border-gray-200 mt-4 pt-4 space-y-2">
+                <button 
+                  type="button" 
+                  onClick={()=> { setDark && setDark(d=>!d); setOpen(false); }} 
+                  className="w-full text-left py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium flex items-center gap-3"
+                >
+                  <Icon name={dark ? 'sun' : 'moon'} size={18} className={dark ? 'text-yellow-500' : 'text-gray-600'} />
+                  {dark ? 'Mode Terang' : 'Mode Gelap'}
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={()=> { setLang && setLang(l=> l==='id' ? 'en' : 'id'); setOpen(false); }} 
+                  className="w-full text-left py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium flex items-center gap-3"
+                >
+                  <span className="text-lg">{lang === 'id' ? '🇬🇧' : '🇮🇩'}</span>
+                  Bahasa: {lang === 'id' ? 'English' : 'Indonesia'}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
