@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="id" class="hacker-mode">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYPHER-ADMIN v2.1.7 | PENETRATION DASHBOARD</title>
+  <!-- Hacker Terminal Dashboard -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Override styles for fresh hacker theme */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'JetBrains Mono', 'Share Tech Mono', monospace; 
+      background: #000;
+      color: #00ff41;
+      overflow-x: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- Matrix Rain Background -->
+  <canvas id="matrix-bg"></canvas>
+  
+  <!-- Terminal Header -->
+  <header class="terminal-header">
+    <div class="terminal-bar">
+      <span class="terminal-title">
+          <i class="fas fa-terminal"></i> SANGSONGKO ENGINEERING v2.1.7 | PENETRATION DASHBOARD
+      </span>
+      <div class="terminal-controls">
+        <span class="timestamp" id="live-time"></span>
+        <button class="terminal-btn" id="minimize"><i class="fas fa-minus"></i></button>
+        <button class="terminal-btn" id="maximize"><i class="fas fa-expand"></i></button>
+        <button class="terminal-btn close" id="close"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="command-line">
+      <span class="prompt">root@cypher-admin:~#</span>
+      <span class="typing-text" id="command-text"></span>
+      <span class="cursor">|</span>
+    </div>
+  </header>
+
+  <!-- Main Terminal Interface -->
+  <main class="terminal-main">
+    <!-- ASCII Art Banner -->
+    <div class="ascii-banner">
+      <pre id="ascii-art">
+   ██████╗ █████╗███╗   ███╗ ███████╗███╗   ██╗███████╗ ██████╗ ███████╗███████╗███████╗
+  ██╔════╝██╔══██╗████╗ ████║██╔════╝████╗  ██║██╔════╝██╔═══██╗██╔════╝██╔════╝██╔════╝
+  ██║     ███████║██╔████╔██║█████╗  ██╔██╗ ██║█████╗  ██║   ██║███████╗█████╗  ███████╗
+  ██║     ██╔══██║██║╚██╔╝██║██╔══╝  ██║╚██╗██║██╔══╝  ██║   ██║╚════██║██╔══╝  ╚════██║
+  ╚██████╗██║  ██║██║ ╚═╝ ██║███████╗██║ ╚████║███████╗╚██████╔╝███████║███████╗███████║
+   ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝
+      </pre>
+    </div>
+
+    <!-- Command Menu -->
+    <div class="command-menu">
+      <div class="menu-item active" data-section="dashboard">
+        <i class="fas fa-desktop"></i> [DASHBOARD] System Overview
+      </div>
+      <div class="menu-item" data-section="targets">
+        <i class="fas fa-crosshairs"></i> [TARGETS] User Profiles
+      </div>
+      <div class="menu-item" data-section="network">
+        <i class="fas fa-network-wired"></i> [NETWORK] Activity Monitor
+      </div>
+      <div class="menu-item" data-section="logs">
+        <i class="fas fa-file-code"></i> [LOGS] System Reports
+      </div>
+      <div class="menu-item" data-section="config">
+        <i class="fas fa-cogs"></i> [CONFIG] Settings
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="content-area">
+      <!-- System Overview Section -->
+      <section id="dashboard-section" class="terminal-section active">
+        <div class="section-header">
+          <h3>>>> SYSTEM PENETRATION OVERVIEW</h3>
+          <div class="scan-line"></div>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-module">
+            <div class="module-header">TOTAL TARGETS</div>
+            <div class="module-value" id="total-targets">0</div>
+            <div class="module-status">ENUMERATED</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 85%"></div></div>
+          </div>
+          
+          <div class="stat-module">
+            <div class="module-header">ACTIVE SESSIONS</div>
+            <div class="module-value" id="active-sessions">0</div>
+            <div class="module-status">COMPROMISED</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+          </div>
+          
+          <div class="stat-module">
+            <div class="module-header">TOTAL BREACHES</div>
+            <div class="module-value" id="total-breaches">0</div>
+            <div class="module-status">SUCCESSFUL</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 95%"></div></div>
+          </div>
+          
+          <div class="stat-module">
+            <div class="module-header">AVG EXPLOIT TIME</div>
+            <div class="module-value" id="avg-time">0m</div>
+            <div class="module-status">OPTIMIZED</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 75%"></div></div>
+          </div>
+        </div>
+
+        <!-- Real-time Log -->
+        <div class="log-container">
+          <div class="log-header">
+            <span><i class="fas fa-terminal"></i> REAL-TIME PENETRATION LOG</span>
+            <button class="log-control" id="pause-log"><i class="fas fa-pause"></i></button>
+          </div>
+          <div class="log-content" id="live-log">
+            <div class="log-entry success">[12:34:56] >>> Successfully enumerated target: ahmad.rizki@smk.sch.id</div>
+            <div class="log-entry info">[12:34:58] >>> Analyzing session patterns...</div>
+            <div class="log-entry warning">[12:35:02] >>> Potential vulnerability detected in user: siti.nurhaliza@smk.sch.id</div>
+            <div class="log-entry success">[12:35:05] >>> Session hijack successful: budi.santoso@smk.sch.id</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Target Profiles Section -->
+      <section id="targets-section" class="terminal-section">
+        <div class="section-header">
+          <h3>>>> TARGET ENUMERATION</h3>
+          <div class="scan-line"></div>
+        </div>
+        
+        <div class="filter-controls">
+          <input type="text" id="target-search" placeholder="Search targets..." class="terminal-input">
+          <select id="status-filter" class="terminal-select">
+            <option value="all">ALL TARGETS</option>
+            <option value="compromised">COMPROMISED</option>
+            <option value="pending">PENDING</option>
+            <option value="failed">FAILED</option>
+          </select>
+        </div>
+
+        <div class="targets-grid" id="targets-grid">
+          <!-- Target cards will be populated here -->
+        </div>
+      </section>
+
+      <!-- Network Monitor Section -->
+      <section id="network-section" class="terminal-section">
+        <div class="section-header">
+          <h3>>>> NETWORK ACTIVITY MONITOR</h3>
+          <div class="scan-line"></div>
+        </div>
+        <div class="network-viz">
+          <canvas id="network-chart"></canvas>
+        </div>
+      </section>
+
+      <!-- Logs Section -->
+      <section id="logs-section" class="terminal-section">
+        <div class="section-header">
+          <h3>>>> PENETRATION REPORTS</h3>
+          <div class="scan-line"></div>
+        </div>
+        <div class="reports-grid">
+          <div class="report-item">
+            <i class="fas fa-file-alt"></i>
+            <span>Daily Breach Report</span>
+            <button class="terminal-btn-small">GENERATE</button>
+          </div>
+          <div class="report-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Vulnerability Analysis</span>
+            <button class="terminal-btn-small">GENERATE</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Config Section -->
+      <section id="config-section" class="terminal-section">
+        <div class="section-header">
+          <h3>>>> SYSTEM CONFIGURATION</h3>
+          <div class="scan-line"></div>
+        </div>
+        <div class="config-options">
+          <div class="config-item">
+            <label>Auto-Scan Interval</label>
+            <select class="terminal-select">
+              <option>30 seconds</option>
+              <option>1 minute</option>
+              <option>5 minutes</option>
+            </select>
+          </div>
+          <div class="config-item">
+            <label>Stealth Mode</label>
+            <input type="checkbox" class="terminal-checkbox" checked>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Target Detail Modal -->
+  <div class="terminal-modal" id="target-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>TARGET ANALYSIS</span>
+        <button class="modal-close" id="close-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Target details will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-firebase.js"></script>
+  <script>
+  // CYPHER-ADMIN HACKER DASHBOARD v2.1.7
+  // Fresh hacker-themed interface
+  
+  (function() {
+    'use strict';
+    
+    // Core variables
+    const st = id => document.getElementById(id);
+    let firebaseUsers = [];
+    let isFirebaseLoaded = false;
+    let logPaused = false;
+    
+    // Mock data for hacker theme
+    const mockTargets = [
+      {
+        id: 1,
+        name: 'Ahmad Rizki',
+        email: 'ahmad.rizki@smk.sch.id',
+        role: 'student',
+        avatar: '/profile.jpg',
+        status: 'compromised',
+        lastSeen: '2025-01-18 08:30:00',
+        totalBreaches: 45,
+        sessionTime: '2h 15m',
+        vulnerability: 'Session Hijacking',
+        riskLevel: 'HIGH'
+      },
+      {
+        id: 2,
+        name: 'Siti Nurhaliza',
+        email: 'siti.nurhaliza@smk.sch.id',
+        role: 'student',
+        avatar: '/profile.jpg',
+        status: 'pending',
+        lastSeen: '2025-01-17 16:45:00',
+        totalBreaches: 38,
+        sessionTime: '1h 45m',
+        vulnerability: 'Weak Credentials',
+        riskLevel: 'MEDIUM'
+      },
+      {
+        id: 3,
+        name: 'Budi Santoso',
+        email: 'budi.santoso@smk.sch.id',
+        role: 'student',
+        avatar: '/profile.jpg',
+        status: 'failed',
+        lastSeen: '2025-01-18 10:15:00',
+        totalBreaches: 52,
+        sessionTime: '3h 20m',
+        vulnerability: 'Encrypted Session',
+        riskLevel: 'LOW'
+      },
+      {
+        id: 4,
+        name: 'Dewi Sartika',
+        email: 'dewi.sartika@smk.sch.id',
+        role: 'student',
+        avatar: '/profile.jpg',
+        status: 'compromised',
+        lastSeen: '2025-01-18 09:20:00',
+        totalBreaches: 41,
+        sessionTime: '2h 30m',
+        vulnerability: 'SQL Injection',
+        riskLevel: 'CRITICAL'
+      },
+      {
+        id: 5,
+        name: 'Eko Prasetyo',
+        email: 'eko.prasetyo@smk.sch.id',
+        role: 'student',
+        avatar: '/profile.jpg',
+        status: 'pending',
+        lastSeen: '2025-01-16 14:30:00',
+        totalBreaches: 29,
+        sessionTime: '1h 15m',
+        vulnerability: 'XSS Vulnerable',
+        riskLevel: 'MEDIUM'
+      }
+    ];
+
+    // Initialize matrix background
+    function initMatrix() {
+      const canvas = st('matrix-bg');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+      const fontSize = 14;
+      const columns = canvas.width / fontSize;
+      const drops = [];
+      
+      for (let i = 0; i < columns; i++) {
+        drops[i] = 1;
+      }
+      
+      function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#00ff41';
+        ctx.font = fontSize + 'px monospace';
+        
+        for (let i = 0; i < drops.length; i++) {
+          const text = chars[Math.floor(Math.random() * chars.length)];
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+          
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+          drops[i]++;
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+      
+      window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+    }
+
+    // Live time display
+    function updateTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+      const dateStr = now.toLocaleDateString('en-US');
+      if (st('live-time')) {
+        st('live-time').textContent = `${dateStr} ${timeStr}`;
+      }
+    }
+
+    // Typing animation for command line
+    function typeCommand() {
+      const commands = [
+        'nmap -sS -O 192.168.1.0/24',
+        'sqlmap -u "target.com/login" --dbs',
+        'hydra -l admin -P passwords.txt ssh://target.com',
+        'metasploit > use exploit/multi/handler',
+        'nikto -h http://target.com',
+        'gobuster dir -u http://target.com -w /usr/share/wordlists/common.txt'
+      ];
+      
+      let currentCommand = 0;
+      let currentChar = 0;
+      
+      function type() {
+        if (currentChar < commands[currentCommand].length) {
+          if (st('command-text')) {
+            st('command-text').textContent = commands[currentCommand].substring(0, currentChar + 1);
+          }
+          currentChar++;
+          setTimeout(type, 150);
+        } else {
+          setTimeout(() => {
+            currentChar = 0;
+            currentCommand = (currentCommand + 1) % commands.length;
+            if (st('command-text')) {
+              st('command-text').textContent = '';
+            }
+            setTimeout(type, 2000);
+          }, 3000);
+        }
+      }
+      type();
+    }
+
+    // Load dashboard stats
+    function loadStats() {
+      const targets = isFirebaseLoaded ? firebaseUsers : mockTargets;
+      
+      if (st('total-targets')) st('total-targets').textContent = targets.length;
+      if (st('active-sessions')) st('active-sessions').textContent = targets.filter(t => t.status === 'compromised').length;
+      if (st('total-breaches')) st('total-breaches').textContent = targets.reduce((sum, t) => sum + (t.totalBreaches || 0), 0);
+      
+      // Calculate average time
+      const avgMinutes = Math.round(targets.reduce((sum, t) => {
+        const time = t.sessionTime || '0h 0m';
+        const hours = parseInt(time.split('h')[0]) || 0;
+        const minutes = parseInt(time.split('h')[1]?.split('m')[0]) || 0;
+        return sum + (hours * 60 + minutes);
+      }, 0) / targets.length);
+      
+      if (st('avg-time')) st('avg-time').textContent = Math.floor(avgMinutes / 60) + 'h ' + (avgMinutes % 60) + 'm';
+    }
+
+    // Load targets grid
+    function loadTargets() {
+      const targets = isFirebaseLoaded ? firebaseUsers : mockTargets;
+      const grid = st('targets-grid');
+      
+      if (!grid) return;
+      
+      grid.innerHTML = targets.map(target => `
+        <div class="target-card" data-target-id="${target.id}">
+          <div class="target-header">
+            <span class="target-id">[${target.id.toString().padStart(3, '0')}]</span>
+            <span class="target-status status-${target.status}">${target.status.toUpperCase()}</span>
+          </div>
+          <div class="target-info">
+            <div class="target-name">${target.name}</div>
+            <div class="target-email">${target.email}</div>
+            <div class="target-vuln">${target.vulnerability || 'Unknown'}</div>
+          </div>
+          <div class="target-stats">
+            <span class="risk-level risk-${target.riskLevel?.toLowerCase() || 'low'}">${target.riskLevel || 'LOW'}</span>
+            <span class="breach-count">${target.totalBreaches || 0} breaches</span>
+          </div>
+          <div class="target-actions">
+            <button class="action-btn" onclick="analyzeTarget(${target.id})">ANALYZE</button>
+            <button class="action-btn" onclick="exploitTarget(${target.id})">EXPLOIT</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Add log entry
+    function addLogEntry(message, type = 'info') {
+      if (logPaused) return;
+      
+      const logContent = st('live-log');
+      if (!logContent) return;
+      
+      const timestamp = new Date().toTimeString().split(' ')[0];
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `[${timestamp}] >>> ${message}`;
+      
+      logContent.appendChild(entry);
+      
+      // Keep only last 20 entries
+      while (logContent.children.length > 20) {
+        logContent.removeChild(logContent.firstChild);
+      }
+      
+      logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    // Simulate real-time log activity
+    function simulateActivity() {
+      const activities = [
+        { msg: 'Port scan completed on subnet 192.168.1.0/24', type: 'success' },
+        { msg: 'Vulnerability detected: SQL injection in login form', type: 'warning' },
+        { msg: 'Brute force attack successful on target', type: 'success' },
+        { msg: 'Firewall detected, switching to stealth mode', type: 'warning' },
+        { msg: 'Session token captured and decoded', type: 'success' },
+        { msg: 'Privilege escalation attempt failed', type: 'error' },
+        { msg: 'Network enumeration in progress...', type: 'info' },
+        { msg: 'Payload deployed successfully', type: 'success' }
+      ];
+      
+      setInterval(() => {
+        const activity = activities[Math.floor(Math.random() * activities.length)];
+        addLogEntry(activity.msg, activity.type);
+      }, 3000);
+    }
+
+    // Section navigation
+    function showSection(sectionName) {
+      // Hide all sections
+      document.querySelectorAll('.terminal-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      // Remove active from menu items
+      document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Show selected section
+      const section = st(sectionName + '-section');
+      if (section) section.classList.add('active');
+      
+      // Add active to clicked menu item
+      const menuItem = document.querySelector(`[data-section="${sectionName}"]`);
+      if (menuItem) menuItem.classList.add('active');
+      
+      // Load section-specific data
+      if (sectionName === 'targets') {
+        loadTargets();
+      }
+    }
+
+    // Global functions for target analysis
+    window.analyzeTarget = function(targetId) {
+      const target = mockTargets.find(t => t.id === targetId);
+      if (!target) return;
+      
+      const modal = st('target-modal');
+      const modalBody = st('modal-body');
+      
+      modalBody.innerHTML = `
+        <div class="target-analysis">
+          <div class="analysis-header">
+            <span class="target-id">[${target.id.toString().padStart(3, '0')}]</span>
+            <span class="target-name">${target.name}</span>
+          </div>
+          <div class="analysis-grid">
+            <div class="analysis-item">
+              <label>Email:</label>
+              <span>${target.email}</span>
+            </div>
+            <div class="analysis-item">
+              <label>Status:</label>
+              <span class="status-${target.status}">${target.status.toUpperCase()}</span>
+            </div>
+            <div class="analysis-item">
+              <label>Risk Level:</label>
+              <span class="risk-${target.riskLevel?.toLowerCase() || 'low'}">${target.riskLevel || 'LOW'}</span>
+            </div>
+            <div class="analysis-item">
+              <label>Vulnerability:</label>
+              <span>${target.vulnerability || 'Unknown'}</span>
+            </div>
+            <div class="analysis-item">
+              <label>Total Breaches:</label>
+              <span>${target.totalBreaches || 0}</span>
+            </div>
+            <div class="analysis-item">
+              <label>Last Seen:</label>
+              <span>${target.lastSeen}</span>
+            </div>
+          </div>
+          <div class="analysis-actions">
+            <button class="action-btn" onclick="startExploit(${target.id})">START EXPLOIT</button>
+            <button class="action-btn" onclick="generateReport(${target.id})">GENERATE REPORT</button>
+          </div>
+        </div>
+      `;
+      
+      modal.style.display = 'flex';
+      addLogEntry(`Analyzing target: ${target.name}`, 'info');
+    };
+
+    window.exploitTarget = function(targetId) {
+      const target = mockTargets.find(t => t.id === targetId);
+      if (!target) return;
+      
+      addLogEntry(`Initiating exploit on ${target.name}...`, 'warning');
+      setTimeout(() => {
+        addLogEntry(`Exploit ${Math.random() > 0.7 ? 'successful' : 'failed'} on ${target.name}`, 
+          Math.random() > 0.7 ? 'success' : 'error');
+      }, 2000);
+    };
+
+    window.startExploit = function(targetId) {
+      const modal = st('target-modal');
+      modal.style.display = 'none';
+      exploitTarget(targetId);
+    };
+
+    window.generateReport = function(targetId) {
+      const modal = st('target-modal');
+      modal.style.display = 'none';
+      addLogEntry(`Generating penetration report for target ${targetId}...`, 'info');
+    };
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      initMatrix();
+      updateTime();
+      setInterval(updateTime, 1000);
+      typeCommand();
+      loadStats();
+      loadTargets();
+      simulateActivity();
+      
+      // Menu navigation
+      document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const section = this.getAttribute('data-section');
+          showSection(section);
+        });
+      });
+      
+      // Modal close
+      if (st('close-modal')) {
+        st('close-modal').addEventListener('click', function() {
+          st('target-modal').style.display = 'none';
+        });
+      }
+      
+      // Log pause toggle
+      if (st('pause-log')) {
+        st('pause-log').addEventListener('click', function() {
+          logPaused = !logPaused;
+          this.innerHTML = logPaused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>';
+        });
+      }
+      
+      // Terminal controls
+      if (st('minimize')) {
+        st('minimize').addEventListener('click', function() {
+          document.body.style.transform = 'scale(0.8)';
+          setTimeout(() => document.body.style.transform = 'scale(1)', 500);
+        });
+      }
+      
+      if (st('maximize')) {
+        st('maximize').addEventListener('click', function() {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        });
+      }
+      
+      // Filter functionality
+      if (st('target-search')) {
+        st('target-search').addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase();
+          document.querySelectorAll('.target-card').forEach(card => {
+            const name = card.querySelector('.target-name').textContent.toLowerCase();
+            const email = card.querySelector('.target-email').textContent.toLowerCase();
+            card.style.display = name.includes(searchTerm) || email.includes(searchTerm) ? 'block' : 'none';
+          });
+        });
+      }
+    });
+
+    // Send ready signal to parent
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'EMBED_READY', app: 'sangsongko-engineering' }, '*');
+      }
+    } catch (e) {
+      console.log('Parent communication not available');
+    }
+
+  })();
+  </script>
+</body>
+</html>

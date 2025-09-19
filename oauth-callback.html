@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OAuth Callback</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; padding: 2rem; background:#f8fafc; color:#0f172a; }
+    pre { background:#1e293b; color:#f1f5f9; padding:1rem; border-radius:8px; overflow:auto; }
+    .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:1.5rem; max-width:640px; margin:0 auto; }
+    .warn { color:#b45309; font-size:.85rem; }
+    .success { color:#059669; font-weight:500; }
+    .error { color:#dc2626; font-weight:500; }
+    .loading { color:#0284c7; }
+    button { background:#3b82f6; color:white; padding:0.5rem 1rem; border:none; border-radius:6px; cursor:pointer; }
+    button:hover { background:#2563eb; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 style="margin-top:0">Google OAuth Callback</h1>
+    <div id="status" class="loading">Memproses login Google...</div>
+    <div id="content" style="display:none">
+      <div class="success" id="success-msg"></div>
+      <p>Login berhasil! Anda akan dialihkan ke portal dalam beberapa detik.</p>
+      <button onclick="redirectToPortal()">Lanjut ke Portal</button>
+    </div>
+    <div id="error" style="display:none" class="error"></div>
+    <div id="debug" style="display:none">
+      <h3>Debug Info</h3>
+      <pre id="params"></pre>
+    </div>
+  </div>
+  
+  <script>
+    function redirectToPortal() {
+      const baseUrl = window.location.origin + (window.location.pathname.includes('/oauth-callback.html') 
+        ? window.location.pathname.replace('/oauth-callback.html', '/') 
+        : '/');
+      window.location.href = baseUrl;
+    }
+
+  function simulateGoogleLogin(code, email = null) {
+      // Simulate successful Google login by creating a mock JWT and storing it
+      const now = Math.floor(Date.now() / 1000);
+      const mockEmail = email || 'user@gmail.com'; // Default for demo
+      const header = { alg: 'none', typ: 'JWT' };
+      const payload = {
+        sub: mockEmail,
+        email: mockEmail,
+        role: 'user',
+        iat: now,
+        exp: now + 300, // 5 minutes
+        jti: 'google-' + Math.random().toString(36).slice(2),
+        provider: 'google'
+      };
+      
+      function b64(obj) {
+        return btoa(JSON.stringify(obj)).replace(/=+/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+      }
+      
+  const jwt = b64(header) + '.' + b64(payload) + '.demo-google';
+      
+      // Store in sessionStorage like regular login
+      sessionStorage.setItem('sso-jwt', jwt);
+      
+      // Also store in used emails
+      try {
+        const usedEmails = JSON.parse(localStorage.getItem('used-emails') || '[]');
+        if (!usedEmails.includes(mockEmail.toLowerCase())) {
+          usedEmails.push(mockEmail.toLowerCase());
+          localStorage.setItem('used-emails', JSON.stringify(usedEmails.slice(-50)));
+        }
+      } catch {}
+      
+      return { success: true, email: mockEmail, credential: jwt, profile: payload };
+    }
+
+    (function(){
+      const usp = new URLSearchParams(location.search);
+      const code = usp.get('code');
+      const state = usp.get('state');
+      const error = usp.get('error');
+      const savedState = sessionStorage.getItem('oauth-google-state');
+      
+      // Debug mode
+      const isDebug = usp.get('debug') === '1';
+      if (isDebug) {
+        document.getElementById('debug').style.display = 'block';
+        const all = {};
+        usp.forEach((v,k) => all[k] = v);
+        document.getElementById('params').textContent = JSON.stringify(all, null, 2);
+      }
+      
+      if (error) {
+        document.getElementById('status').style.display = 'none';
+        const elErr = document.getElementById('error');
+        elErr.style.display = 'block';
+        elErr.innerHTML = `
+          <p>Login Google gagal: <strong>${error}</strong></p>
+          <p>Deskripsi: ${usp.get('error_description') || 'Tidak ada deskripsi'}</p>
+          <button onclick="redirectToPortal()">Kembali ke Portal</button>
+        `;
+        // Notify opener about error if possible
+        try {
+          if (window.opener && window.opener !== window) {
+            window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: error }, window.location.origin);
+          }
+        } catch {}
+        return;
+      }
+      
+      if (!code) {
+        document.getElementById('status').textContent = 'Parameter authorization code tidak ditemukan.';
+        setTimeout(() => {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').innerHTML = '<button onclick="redirectToPortal()">Kembali ke Portal</button>';
+        }, 2000);
+        return;
+      }
+      
+      if (!savedState || savedState !== state) {
+        document.getElementById('status').textContent = 'State tidak valid atau sesi kedaluwarsa.';
+        setTimeout(() => {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').innerHTML = '<button onclick="redirectToPortal()">Kembali ke Portal</button>';
+        }, 2000);
+        return;
+      }
+      
+      // Clean up state
+      sessionStorage.removeItem('oauth-google-state');
+      
+      // Simulate login success (in real app, this would be done by backend)
+      setTimeout(() => {
+        try {
+          const result = simulateGoogleLogin(code);
+          if (result.success) {
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('success-msg').textContent = `Selamat datang, ${result.email}!`;
+            
+            // Notify opener (popup flow)
+            try {
+              if (window.opener && window.opener !== window) {
+                window.opener.postMessage({
+                  type: 'GOOGLE_AUTH_SUCCESS',
+                  credential: result.credential,
+                  mockUserData: result.profile
+                }, window.location.origin);
+                // Close the popup shortly after
+                setTimeout(() => window.close(), 500);
+                return; // Do not redirect this tab
+              }
+            } catch {}
+
+            // Fallback: redirect this page back to portal
+            setTimeout(() => {
+              redirectToPortal();
+            }, 1000);
+          }
+        } catch (err) {
+          document.getElementById('status').style.display = 'none';
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').innerHTML = `
+            <p>Error memproses login: ${err.message}</p>
+            <button onclick="redirectToPortal()">Kembali ke Portal</button>
+          `;
+          try {
+            if (window.opener && window.opener !== window) {
+              window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: err.message }, window.location.origin);
+            }
+          } catch {}
+        }
+      }, 1000);
+      
+    })();
+  </script>
+</body>
+</html>

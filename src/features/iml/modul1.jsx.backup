@@ -1,0 +1,1255 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { learningProgressManager } from '../../utils/learningProgress';
+
+// Enhanced ModuleLearning component with improved UI/UX
+export default function ModuleLearning({ user, moduleId, onBack, onComplete, moduleData = null }) {
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [completedSections, setCompletedSections] = useState(new Set());
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const normalizeModuleId = (id) => (id && id.startsWith('module-') ? id.replace('module-', 'modul-') : id);
+  const internalModuleId = normalizeModuleId(moduleId);
+
+  const modules = {
+    'modul-1': {
+      id: 'modul-1',
+      title: 'Dasar-Dasar Motor Listrik',
+      description: 'Pengenalan komponen dan prinsip kerja motor listrik',
+      duration: '8 jam',
+      sections: [
+        { id: 's1', title: 'Pengenalan Motor Listrik', slides: [{ type: 'text', title: 'Apa itu Motor Listrik?', content: 'Motor listrik adalah mesin yang mengubah energi listrik menjadi energi mekanik.' }] }
+      ],
+      quiz: { questions: [], timeLimit: 0, passingScore: 70 }
+    }
+  };
+
+  const currentModule = moduleData || modules[internalModuleId];
+  const currentSection = currentModule?.sections?.[currentSectionIndex];
+  const totalSlides = currentSection?.slides?.length || 0;
+  const currentSlide = currentSection?.slides?.[currentSlideIndex];
+
+  useEffect(() => {
+    if (user && currentModule) {
+      const saved = learningProgressManager.getModuleProgress?.(user.id, internalModuleId);
+      if (saved && Array.isArray(saved.completedSections)) setCompletedSections(new Set(saved.completedSections));
+    }
+  }, [user, internalModuleId, currentModule]);
+
+  const handleSectionComplete = (sectionKey) => {
+    setCompletedSections((prev) => {
+      const next = new Set(prev);
+      next.add(sectionKey);
+      learningProgressManager.saveProgress?.(user?.id, internalModuleId, { completedSections: Array.from(next) });
+      return next;
+    });
+  };
+
+  const nextSlide = () => {
+    if (currentSlideIndex < totalSlides - 1) {
+      setCurrentSlideIndex(currentSlideIndex + 1);
+    } else if (currentSectionIndex < currentModule.sections.length - 1) {
+      setCurrentSectionIndex(currentSectionIndex + 1);
+      setCurrentSlideIndex(0);
+    }
+  };
+
+  const prevSlide = () => {
+    if (currentSlideIndex > 0) {
+      setCurrentSlideIndex(currentSlideIndex - 1);
+    } else if (currentSectionIndex > 0) {
+      setCurrentSectionIndex(currentSectionIndex - 1);
+      const prevSection = currentModule.sections[currentSectionIndex - 1];
+      setCurrentSlideIndex(prevSection.slides.length - 1);
+    }
+  };
+
+  const progressPercentage = currentModule ? 
+    ((currentSectionIndex * 100 + (currentSlideIndex + 1) * (100 / totalSlides)) / currentModule.sections.length) : 0;
+
+  const renderSlide = (slide) => {
+    if (!slide) return null;
+    
+    return (
+      <motion.div
+        key={`${currentSectionIndex}-${currentSlideIndex}`}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.3 }}
+        className="bg-gradient-to-br from-white to-blue-50 rounded-xl md:rounded-2xl p-4 md:p-8 shadow-lg border border-blue-100"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6">
+          <div className="flex items-center space-x-3 mb-2 md:mb-0">
+            <div className="px-2 md:px-3 py-1 bg-blue-600 text-white rounded-full text-xs md:text-sm font-semibold">
+              {`${currentSectionIndex + 1}.${currentSlideIndex + 1}`}
+            </div>
+            <div>
+              <h2 className="text-lg md:text-2xl font-bold text-gray-800 underline decoration-blue-400 decoration-2 mb-1">{slide.title}</h2>
+              <p className="text-xs md:text-sm text-blue-600 font-medium italic">{currentSection.title}</p>
+            </div>
+          </div>
+          <div className="text-xs md:text-sm text-gray-500">
+            Slide {`${currentSectionIndex + 1}.${currentSlideIndex + 1}`} of {`${currentSectionIndex + 1}.${totalSlides}`}
+          </div>
+        </div>
+
+        <div className="prose prose-sm md:prose-lg max-w-none">
+          {slide.type === 'text' && (
+            <div className="text-gray-700 leading-relaxed whitespace-pre-line text-justify text-sm md:text-base">
+              {slide.content}
+            </div>
+          )}
+          {slide.type === 'image' && (
+            <div className="text-center my-4 md:my-8">
+              <div className="bg-white p-2 md:p-4 rounded-lg md:rounded-xl shadow-sm inline-block">
+                <img src={slide.src} alt={slide.title} className="max-w-full h-auto rounded-md md:rounded-lg" />
+                {slide.caption && (
+                  <p className="text-xs md:text-sm text-gray-600 mt-2 md:mt-3 italic">{slide.caption}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
+  if (!currentModule) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📚</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Modul Tidak Ditemukan</h2>
+          <p className="text-gray-600">Modul yang Anda cari tidak tersedia.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Header dengan Progress */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <button 
+                onClick={onBack}
+                className="flex items-center space-x-1 md:space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="font-medium text-sm md:text-base">Kembali</span>
+              </button>
+              
+              {/* Mobile menu button for sidebar */}
+              <button 
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors p-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span className="text-sm font-medium">Menu</span>
+              </button>
+              
+              <div className="border-l border-gray-300 pl-2 md:pl-4">
+                <h1 className="text-lg md:text-xl font-bold text-gray-800">{currentModule.title}</h1>
+                <p className="text-xs md:text-sm text-gray-600 hidden sm:block">{currentModule.description}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs md:text-sm text-gray-600 mb-1 hidden sm:block">Progress Pembelajaran</div>
+              <div className="flex items-center space-x-2">
+                <div className="w-16 md:w-32 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs md:text-sm font-medium text-gray-700">
+                  {Math.round(progressPercentage)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={() => setSidebarOpen(false)}>
+          <div className="bg-white w-80 h-full shadow-lg overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-800">Daftar Materi</h3>
+                <button 
+                  onClick={() => setSidebarOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="space-y-2">
+                {currentModule.sections.map((section, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setCurrentSectionIndex(idx);
+                      setCurrentSlideIndex(0);
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg transition-all ${
+                      idx === currentSectionIndex 
+                        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300' 
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{section.title}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {section.slides.length} slide{section.slides.length > 1 ? 's' : ''}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button 
+                  onClick={() => {
+                    handleSectionComplete(currentSection?.id || currentSection?.title);
+                    setSidebarOpen(false);
+                  }}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-md"
+                >
+                  ✓ Tandai Selesai
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
+          {/* Desktop Sidebar Navigasi */}
+          <div className="hidden md:block md:col-span-3">
+            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Daftar Materi</h3>
+              <div className="space-y-2">
+                {currentModule.sections.map((section, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setCurrentSectionIndex(idx);
+                      setCurrentSlideIndex(0);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg transition-all ${
+                      idx === currentSectionIndex 
+                        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300' 
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{section.title}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {section.slides.length} slide{section.slides.length > 1 ? 's' : ''}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button 
+                  onClick={() => handleSectionComplete(currentSection?.id || currentSection?.title)}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-md"
+                >
+                  ✓ Tandai Selesai
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="col-span-1 md:col-span-9">
+            {currentSlide && renderSlide(currentSlide)}
+            
+            {/* Navigation Controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 md:mt-8 gap-4">
+              <button 
+                onClick={prevSlide}
+                disabled={currentSectionIndex === 0 && currentSlideIndex === 0}
+                className="flex items-center space-x-2 px-4 md:px-6 py-2 md:py-3 bg-white text-gray-700 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200 w-full sm:w-auto justify-center"
+              >
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="font-medium text-sm md:text-base">Sebelumnya</span>
+              </button>
+
+              <div className="flex items-center space-x-1 md:space-x-2 order-first sm:order-none">
+                {Array.from({ length: totalSlides }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentSlideIndex(i)}
+                    className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${
+                      i === currentSlideIndex 
+                        ? 'bg-blue-600 scale-125' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button 
+                onClick={nextSlide}
+                disabled={currentSectionIndex === currentModule.sections.length - 1 && currentSlideIndex === totalSlides - 1}
+                className="flex items-center space-x-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+              >
+                <span className="font-medium text-sm md:text-base">Selanjutnya</span>
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Named export: plain-data modul1 (no JSX in data)
+export const modul1 = {
+  id: 'modul-1',
+  title: 'Dasar-Dasar Motor Listrik',
+  description: 'Studi komprehensif tentang motor listrik AC/DC, sistem proteksi, metode starting, dan efisiensi energi',
+  sections: [
+    {
+      id: 'bab1',
+      title: 'BAB I. Pengenalan Motor Listrik',
+      slides: [
+        {
+          type: 'text',
+          title: 'Motor Listrik - Definisi dan Prinsip Kerja',
+          content: `Motor listrik adalah sebuah perangkat elektromagnetis yang mengubah energi listrik menjadi energi gerak (mekanik). Energi mekanik ini digunakan untuk kebutuhan beban seperti memutar pompa, kipas, kompresor, mengangkat bahan, dan lain-lain.
+
+          PRINSIP KERJA MOTOR LISTRIK:
+          Motor listrik bekerja berdasarkan prinsip elektromagnetisme. Ketika arus listrik mengalir melalui konduktor yang berada dalam medan magnet, konduktor tersebut akan mengalami gaya (gaya Lorentz). Gaya ini yang menyebabkan rotor berputar.
+
+          KOMPONEN UTAMA MOTOR LISTRIK:
+          1. Stator: Bagian yang diam dan berfungsi untuk menghasilkan medan magnet. Stator terdiri dari kumparan kawat yang dililitkan pada inti besi.
+          2. Rotor: Bagian yang berputar dan menerima gaya dari medan magnet yang dihasilkan oleh stator.
+          3. Komutator: Komponen ini sebenarnya lebih umum ditemukan pada motor DC untuk mengubah arah arus. Pada beberapa jenis motor AC, fungsi serupa dilakukan oleh cincin geser.
+          4. Sikat Karbon: Menyalurkan arus listrik dari sumber ke bagian yang berputar (rotor).
+          5. Bearing: Bantalan yang menopang poros rotor dan memungkinkan rotor berputar dengan lancar dan minim gesekan.
+
+          APLIKASI MOTOR LISTRIK:
+          - Industri: Conveyor, mesin produksi, kompresor
+          - Rumah tangga: Kipas angin, mesin cuci, blender
+          - Transportasi: Kereta listrik, mobil listrik
+          - Otomasi: Robot industri, sistem kontrol`
+        },
+        {
+          type: 'image',
+          title: 'Bagan Jenis-Jenis Motor Listrik',
+          src: 'src/photo/bagianmotor.png',
+          caption: 'Gambar 1.1 bagian-bagian utama motor listrik'
+        },
+        {
+          type: 'text',
+          title: 'Klasifikasi Motor Listrik',
+          content: `Motor listrik dapat diklasifikasikan berdasarkan beberapa kriteria:
+
+BERDASARKAN JENIS ARUS:
+1. Motor AC (Alternating Current)
+   - Motor Sinkron
+   - Motor Induksi (Asinkron)
+   - Motor Universal
+
+2. Motor DC (Direct Current)
+   - Motor DC dengan sikat (Brushed DC)
+   - Motor DC tanpa sikat (Brushless DC)
+
+BERDASARKAN KONSTRUKSI:
+1. Motor dengan komutator
+2. Motor tanpa komutator
+
+BERDASARKAN KECEPATAN:
+1. Motor kecepatan konstan
+2. Motor kecepatan variabel
+
+BERDASARKAN DAYA:
+1. Motor daya kecil (< 1 HP)
+2. Motor daya menengah (1-100 HP)
+3. Motor daya besar (> 100 HP)
+
+BERDASARKAN APLIKASI:
+1. Motor servo
+2. Motor stepper
+3. Motor universal
+4. Motor traksi`
+        },
+        {
+          type: 'text',
+          title: 'Motor Listrik DC - Konstruksi dan Karakteristik',
+          content: `Motor DC menggunakan arus searah (DC) sebagai sumber dayanya. Motor ini memiliki karakteristik khusus yang membuatnya cocok untuk aplikasi tertentu.
+
+KONSTRUKSI MOTOR DC:
+1. Stator (Kutub): Menghasilkan medan magnet konstan
+   - Kutub utama (main pole)
+   - Kutub bantu (interpole/commutating pole)
+
+2. Rotor (Angker): Bagian yang berputar
+   - Inti angker (laminated iron core)
+   - Lilitan angker (armature winding)
+   - Komutator (commutator)
+
+3. Sikat Karbon: Menyalurkan arus dari sumber ke rotor
+
+JENIS-JENIS MOTOR DC:
+1. Motor DC Shunt (Paralel)
+   - Lilitan medan paralel dengan angker
+   - Kecepatan relatif konstan
+   - Torsi sebanding dengan arus angker
+
+2. Motor DC Seri
+   - Lilitan medan seri dengan angker
+   - Torsi start tinggi
+   - Kecepatan berubah dengan beban
+
+3. Motor DC Compound
+   - Kombinasi lilitan shunt dan seri
+   - Karakteristik gabungan keduanya
+
+KARAKTERISTIK MOTOR DC:
+- Mudah dikontrol kecepatannya
+- Torsi start tinggi
+- Efisiensi tinggi pada kecepatan rated
+- Memerlukan perawatan sikat karbon
+- Cocok untuk aplikasi kecepatan variabel`
+        },
+        {
+          type: 'image',
+          title: 'Konstruksi Motor DC',
+          src: 'src/photo/kontruksimotordc.png',
+          caption: 'Gambar 1.2 Konstruksi dan Komponen Motor DC'
+        },
+        {
+          type: 'text',
+          title: 'Motor Listrik AC - Prinsip dan Jenis',
+          content: `Motor AC menggunakan arus bolak-balik sebagai sumber dayanya. Motor ini lebih sederhana konstruksinya dibanding motor DC karena tidak memerlukan komutator.
+
+PRINSIP KERJA MOTOR AC:
+Motor AC bekerja berdasarkan prinsip medan magnet berputar (rotating magnetic field). Ketika tegangan tiga fasa diberikan pada lilitan stator, akan terbentuk medan magnet yang berputar dengan kecepatan sinkron.
+
+Kecepatan sinkron (ns) = 120 × f / P
+Dimana:
+- ns = kecepatan sinkron (rpm)
+- f = frekuensi (Hz)
+- P = jumlah kutub
+
+JENIS-JENIS MOTOR AC:
+
+1. MOTOR INDUKSI (ASINKRON):
+   a. Motor Induksi 1 Fasa:
+      - Motor split phase
+      - Motor kapasitor start
+      - Motor kapasitor permanent
+      - Motor shaded pole
+   
+   b. Motor Induksi 3 Fasa:
+      - Rotor sangkar tupai (squirrel cage)
+      - Rotor lilit (wound rotor)
+
+2. MOTOR SINKRON:
+   - Kecepatan konstan = kecepatan sinkron
+   - Rotor dengan magnet permanent atau electromagnet
+   - Memerlukan starting motor
+   - Faktor daya dapat diatur (leading/lagging)
+
+KARAKTERISTIK MOTOR AC:
+- Konstruksi sederhana dan robust
+- Perawatan minimal (tidak ada sikat)
+- Cocok untuk aplikasi kecepatan konstan
+- Efisiensi tinggi
+- Biaya operasional rendah`
+        },
+        {
+          type: 'text',
+          title: 'Motor Induksi 3 Fasa - Detail Konstruksi',
+          content: `Motor induksi 3 fasa adalah jenis motor AC yang paling banyak digunakan di industri karena kesederhanaan, keandalan, dan efisiensinya.
+
+KONSTRUKSI MOTOR INDUKSI:
+
+1. STATOR:
+   - Inti stator dari laminasi baja silikon
+   - Alur-alur untuk menempatkan lilitan 3 fasa
+   - Lilitan terdistribusi dengan sudut 120° listrik
+   - Menghasilkan medan magnet berputar
+
+2. ROTOR:
+   a. Rotor Sangkar Tupai:
+      - Batang konduktor aluminium/tembaga
+      - Hubung singkat oleh cincin ujung
+      - Tanpa lilitan terpisah
+      - Konstruksi robust dan murah
+   
+   b. Rotor Lilit:
+      - Lilitan 3 fasa seperti stator
+      - Ujung lilitan ke slip ring
+      - Dapat ditambah resistor eksternal
+      - Untuk kontrol torsi dan arus start
+
+3. CELAH UDARA:
+   - Jarak antara stator dan rotor
+   - Umumnya 0.4-4 mm
+   - Mempengaruhi karakteristik motor
+
+PRINSIP KERJA:
+1. Tegangan 3 fasa pada stator → medan magnet berputar
+2. Medan berputar memotong konduktor rotor
+3. Timbul EMF dan arus induksi pada rotor
+4. Interaksi medan stator-rotor → torsi putar
+5. Rotor berputar dengan slip terhadap medan stator
+
+SLIP (s) = (ns - nr) / ns × 100%
+Dimana:
+- s = slip (%)
+- ns = kecepatan sinkron (rpm)
+- nr = kecepatan rotor (rpm)`
+        },
+        {
+          type: 'text',
+          title: 'Karakteristik Torsi-Kecepatan Motor Induksi',
+          content: `Karakteristik torsi-kecepatan motor induksi sangat penting untuk memahami kinerja motor pada berbagai kondisi operasi.
+
+KURVA TORSI-KECEPATAN:
+1. Starting Torque (Ts):
+   - Torsi saat motor mulai berputar (nr = 0)
+   - Untuk rotor sangkar: Ts = 1.0 - 2.5 × Tn
+   - Untuk rotor lilit: dapat lebih tinggi
+
+2. Maximum Torque (Tm):
+   - Torsi maksimum yang dapat dihasilkan
+   - Terjadi pada slip tertentu (biasanya 10-25%)
+   - Tm = 2.0 - 3.0 × Tn
+
+3. Full Load Torque (Tn):
+   - Torsi pada beban penuh
+   - Slip biasanya 2-5%
+
+4. Breakdown Torque:
+   - Torsi maksimum sebelum motor stall
+   - Sama dengan maximum torque
+
+FAKTOR-FAKTOR YANG MEMPENGARUHI:
+
+1. Resistansi Rotor:
+   - Resistansi tinggi → starting torque tinggi
+   - Resistansi rendah → efisiensi tinggi
+
+2. Tegangan Terminal:
+   - Torsi sebanding dengan kuadrat tegangan
+   - T ∝ V²
+
+3. Frekuensi:
+   - Kecepatan sebanding dengan frekuensi
+   - ns = 120f/P
+
+4. Jumlah Kutub:
+   - Lebih banyak kutub → kecepatan lebih rendah
+   - Torsi per ampere lebih tinggi
+
+APLIKASI BERDASARKAN KARAKTERISTIK:
+- Beban torsi konstan: pompa sentrifugal
+- Beban torsi kuadrat: fan, blower
+- Beban torsi linier: conveyor belt`
+        },
+        {
+          type: 'text',
+          title: 'Metode Starting Motor Induksi',
+          content: `Motor induksi memerlukan arus start yang tinggi (5-7 kali arus nominal). Berbagai metode starting dikembangkan untuk mengurangi arus start.
+
+1. DIRECT ON LINE (DOL) STARTING:
+   Keunggulan:
+   - Sederhana dan murah
+   - Torsi start maksimum
+   - Cocok untuk motor kecil
+
+   Kelemahan:
+   - Arus start sangat tinggi (6-8 × In)
+   - Voltage dip pada sistem
+   - Mechanical stress tinggi
+
+2. STAR-DELTA STARTING:
+   Prinsip:
+   - Start dalam koneksi star (Y)
+   - Running dalam koneksi delta (Δ)
+   - Arus start = 1/3 × arus DOL
+   - Torsi start = 1/3 × torsi DOL
+
+   Aplikasi:
+   - Motor daya menengah-besar
+   - Beban dengan torsi start rendah
+
+3. AUTO-TRANSFORMER STARTING:
+   Prinsip:
+   - Tegangan start dikurangi dengan autotransformator
+   - Tap umum: 80%, 65%, 50%
+   - Arus start dan torsi sebanding dengan kuadrat tegangan
+
+4. SOFT STARTER:
+   Prinsip:
+   - Kontrol tegangan dengan thyristor/triac
+   - Gradual voltage ramping
+   - Arus start dapat dikontrol halus
+
+5. VARIABLE FREQUENCY DRIVE (VFD):
+   Prinsip:
+   - Kontrol frekuensi dan tegangan
+   - Torsi konstan dari 0 rpm
+   - Efisiensi tinggi dan kontrol presisi
+
+PEMILIHAN METODE STARTING:
+- Daya motor
+- Karakteristik beban
+- Kondisi supply system
+- Persyaratan torsi start
+- Budget dan kompleksitas`
+        },
+        {
+          type: 'text',
+          title: 'Perhitungan Daya dan Efisiensi Motor',
+          content: `Perhitungan daya motor listrik penting untuk sizing, seleksi, dan analisis efisiensi sistem.
+
+DAYA INPUT MOTOR 3 FASA:
+Pin = √3 × VL × IL × cos φ (Watt)
+Pin = 3 × Vph × Iph × cos φ (Watt)
+
+Dimana:
+- VL = tegangan line-to-line (V)
+- IL = arus line (A)
+- Vph = tegangan fasa (V)
+- Iph = arus fasa (A)
+- cos φ = faktor daya
+
+DAYA OUTPUT MOTOR:
+Pout = 2π × n × T / 60 (Watt)
+Pout = η × Pin (Watt)
+
+Dimana:
+- n = kecepatan rotor (rpm)
+- T = torsi (Nm)
+- η = efisiensi motor
+
+EFISIENSI MOTOR:
+η = Pout / Pin × 100%
+η = (Pin - Losses) / Pin × 100%
+
+LOSSES DALAM MOTOR:
+1. Copper Losses (I²R):
+   - Stator copper loss = 3 × I₁² × R₁
+   - Rotor copper loss = 3 × I₂² × R₂
+
+2. Core Losses:
+   - Hysteresis loss
+   - Eddy current loss
+
+3. Mechanical Losses:
+   - Friction loss
+   - Windage loss
+
+4. Stray Load Losses:
+   - Losses lain-lain (biasanya 0.5% dari output)
+
+FAKTOR DAYA MOTOR:
+cos φ = P / (√3 × VL × IL)
+
+ARUS NOMINAL MOTOR:
+In = P / (√3 × VL × cos φ × η)
+
+Dimana P = daya output dalam Watt
+
+CONTOH PERHITUNGAN:
+Motor 10 HP, 380V, 3 fasa, cos φ = 0.85, η = 90%
+Pout = 10 × 746 = 7460 W
+Pin = 7460 / 0.9 = 8289 W
+In = 8289 / (√3 × 380 × 0.85) = 14.8 A`
+        },
+        {
+          type: 'text',
+          title: 'Sistem Proteksi Motor Listrik - Konsep Dasar',
+          content: `Sistem proteksi motor listrik adalah rangkaian peralatan yang dirancang untuk melindungi motor dari kondisi abnormal yang dapat merusak motor atau membahayakan keselamatan.
+
+TUJUAN SISTEM PROTEKSI:
+1. Melindungi motor dari kerusakan akibat:
+   - Arus lebih (overload)
+   - Hubung singkat (short circuit)
+   - Tegangan lebih/kurang
+   - Fase hilang (phase loss)
+   - Temperatur berlebih
+
+2. Melindungi manusia dari:
+   - Sengatan listrik
+   - Kebakaran akibat gangguan listrik
+
+3. Menjaga kontinuitas operasi:
+   - Isolasi gangguan dengan cepat
+   - Meminimalkan downtime
+   - Koordinasi proteksi
+
+PRINSIP DASAR PROTEKSI:
+1. SELEKTIVITAS:
+   - Proteksi harus bisa membedakan kondisi normal dan abnormal
+   - Hanya memutus bagian yang terganggu
+   - Koordinasi antar peralatan proteksi
+
+2. SENSITIVITAS:
+   - Mampu mendeteksi gangguan terkecil yang berbahaya
+   - Setting yang tepat sesuai karakteristik motor
+   - Respon yang cepat terhadap gangguan
+
+3. KECEPATAN:
+   - Waktu trip sesuai dengan karakteristik gangguan
+   - Koordinasi waktu dengan proteksi upstream/downstream
+   - Backup protection
+
+4. KEANDALAN:
+   - Bekerja saat dibutuhkan (dependability)
+   - Tidak bekerja saat tidak dibutuhkan (security)
+   - Maintenance yang proper
+
+KLASIFIKASI GANGGUAN:
+1. Gangguan Transient:
+   - Starting inrush current
+   - Load switching
+   - Voltage sag/swell
+
+2. Gangguan Permanen:
+   - Hubung singkat
+   - Ground fault
+   - Mechanical jamming`
+        },
+        {
+          type: 'text',
+          title: 'Thermal Overload Relay (TOR)',
+          content: `Thermal Overload Relay adalah peralatan proteksi utama untuk melindungi motor dari arus beban lebih yang dapat merusak isolasi motor.
+
+PRINSIP KERJA TOR:
+TOR bekerja berdasarkan efek panas yang dihasilkan oleh arus listrik. Ketika arus melebihi setting, bimetal akan melengkung dan membuka kontak.
+
+KONSTRUKSI TOR:
+1. Bimetal Strip:
+   - Dua logam dengan koefisien muai berbeda
+   - Melengkung saat dipanaskan
+   - Material: brass dan invar
+
+2. Heater Element:
+   - Menghasilkan panas proporsional dengan I²
+   - Dipasang seri dengan motor
+   - Rating sesuai arus motor
+
+3. Kontak Bantu:
+   - NC (Normally Closed) untuk kontrol
+   - NO (Normally Open) untuk alarm
+   - Rated untuk arus kontrol
+
+4. Adjustment Dial:
+   - Setting arus trip
+   - Range biasanya ±20% dari rating
+   - Kompensasi temperatur ambient
+
+KARAKTERISTIK TOR:
+1. Time-Current Characteristic:
+   - Kurva inverse (semakin besar arus, semakin cepat trip)
+   - Class 10, 20, 30 (waktu trip pada 7.2 × In)
+   - Thermal memory (akumulasi panas)
+
+2. Setting Range:
+   - Biasanya 0.8 - 1.2 × In motor
+   - Fine adjustment untuk matching motor
+
+3. Ambient Temperature Compensation:
+   - Kompensasi otomatis untuk suhu ambient
+   - Range kompensasi: -20°C to +60°C
+
+APLIKASI DAN PEMILIHAN:
+1. Motor Rating Match:
+   - TOR class sesuai aplikasi motor
+   - Class 10: motor normal start
+   - Class 20: motor heavy start
+   - Class 30: motor very heavy start
+
+2. Coordination:
+   - Dengan circuit breaker upstream
+   - Time grading untuk selektivitas
+   - Backup protection consideration
+
+MAINTENANCE TOR:
+- Kalibrasi periodic
+- Cleaning kontak
+- Check mechanical operation
+- Thermal calibration test`
+        },
+         {
+          type: 'image',
+          title: 'Thermal Overload Relay',
+          src: 'src/photo/gambar TOR.jpg',
+          caption: 'Gambar 1.3 TOR dengan bimetal dan heater element'
+        },
+        {
+          type: 'text',
+          title: 'Circuit Breaker dan MCCB',
+          content: `Circuit Breaker adalah peralatan proteksi untuk memutus arus gangguan dengan aman dan dapat di-reset untuk operasi normal.
+
+MOLDED CASE CIRCUIT BREAKER (MCCB):
+MCCB adalah jenis circuit breaker yang banyak digunakan untuk proteksi motor dan distribusi tenaga.
+
+KONSTRUKSI MCCB:
+1. Kontak Utama:
+   - Fixed contact dan moving contact
+   - Material silver alloy atau copper tungsten
+   - Arc resistance yang baik
+
+2. Arc Extinction System:
+   - Arc chute dengan deion plates
+   - Magnetic blowout
+   - SF6 atau vacuum untuk MCCB besar
+
+3. Operating Mechanism:
+   - Manual operation handle
+   - Trip-free mechanism
+   - Stored energy untuk closing
+
+4. Trip Unit:
+   - Thermal element untuk overload
+   - Magnetic element untuk short circuit
+   - Electronic trip unit untuk presisi tinggi
+
+JENIS TRIP UNIT:
+1. Thermal-Magnetic (TM):
+   - Thermal: overload protection (I₁)
+   - Magnetic: short circuit protection (I₃)
+   - Fixed atau adjustable setting
+
+2. Electronic Trip Unit:
+   - Microprocessor controlled
+   - Programmable settings
+   - Multiple protection functions:
+     * Long time (I₁): overload
+     * Short time (I₂): selective SC
+     * Instantaneous (I₃): high SC
+     * Ground fault (Ig)
+
+KOORDINASI PROTEKSI:
+1. Selectivity:
+   - Time grading
+   - Current grading
+   - Zone selective interlocking (ZSI)
+
+2. Back-up Protection:
+   - Let-through energy coordination
+   - I²t coordination
+   - Cascade protection
+
+APLIKASI MCCB:
+- Main incoming protection
+- Feeder protection
+- Motor protection (dengan kontaktor)
+- Generator protection
+
+MAINTENANCE:
+- Contact inspection
+- Insulation resistance test
+- Trip test
+- Calibration verification`
+        },
+        {
+          type: 'text',
+          title: 'Kontaktor dan Sistem Kontrol Motor',
+          content: `Kontaktor adalah switch elektromagnetik untuk mengendalikan motor listrik secara remote dengan aman.
+
+KONSTRUKSI KONTAKTOR:
+1. Kontak Utama:
+   - 3 pole untuk motor 3 fasa
+   - Rating sesuai arus motor
+   - Silver alloy contacts
+
+2. Kontak Bantu:
+   - NO (Normally Open)
+   - NC (Normally Closed)
+   - Untuk kontrol circuit
+
+3. Electromagnet Coil:
+   - AC atau DC operation
+   - Voltage rating: 24V, 110V, 220V, 380V
+   - Power consumption rendah
+
+4. Arc Suppression:
+   - Arc chute
+   - RC snubber circuit
+   - Varistor untuk DC coil
+
+RATING KONTAKTOR:
+1. Utilization Categories (IEC):
+   - AC-1: Non-inductive loads
+   - AC-3: Motor starting, switching off running motor
+   - AC-4: Motor starting, jogging, plugging
+
+2. Current Rating:
+   - Ie: rated operational current
+   - Ith: thermal current
+   - Icw: short-time withstand current
+
+3. Voltage Rating:
+   - Ue: rated operational voltage
+   - Ui: rated insulation voltage
+   - Uimp: rated impulse voltage
+
+APLIKASI DALAM MOTOR CONTROL:
+1. DOL Starting:
+   - Kontaktor + TOR + MCB
+   - Start/stop control
+   - Emergency stop
+
+2. Star-Delta Starting:
+   - Main contactor (delta)
+   - Star contactor
+   - Delta contactor
+   - Timer untuk switching
+
+3. Forward-Reverse Control:
+   - Forward contactor
+   - Reverse contactor
+   - Mechanical/electrical interlocking
+
+4. Multi-Speed Motor:
+   - Separate contactor untuk setiap speed
+   - Sequence control
+   - Smooth transition
+
+CONTROL CIRCUIT DESIGN:
+1. Safety Considerations:
+   - Emergency stop (NC contact)
+   - Thermal overload (NC contact)
+   - Interlock circuits
+
+2. Start/Stop Control:
+   - Momentary start button (NO)
+   - Stop button (NC) + E-stop (NC)
+   - Auxiliary contact untuk holding
+
+3. Indication:
+   - Running lamp
+   - Trip indication
+   - Ready indication
+
+MAINTENANCE KONTAKTOR:
+- Contact inspection dan cleaning
+- Coil resistance check
+- Insulation test
+- Mechanical operation check
+- Arc chute cleaning`
+        },
+        {
+          type: 'image',
+          title: 'Molded Case Circuit Breaker',
+          src: 'src/photo/gambar MCCB.jpg',
+          caption: 'Gambar 1.4 MCCB dengan trip unit thermal-magnetic'
+        },
+        {
+          type: 'text',
+          title: 'Sekering (Fuse) dan Earth Leakage Protection',
+          content: `Sekering adalah peralatan proteksi yang bekerja dengan prinsip pelelehan elemen untuk memutus arus gangguan.
+
+SEKERING (FUSE):
+1. PRINSIP KERJA:
+   - Elemen sekering meleleh saat arus berlebih
+   - Memutus rangkaian secara permanen
+   - Harus diganti setelah operasi
+
+2. KARAKTERISTIK FUSE:
+   - Time-current characteristic
+   - Pre-arcing time: waktu sampai elemen meleleh
+   - Arcing time: waktu pemadaman arc
+   - Total clearing time = pre-arcing + arcing time
+
+3. JENIS FUSE:
+   a. Cartridge Fuse:
+      - HRC (High Rupturing Capacity)
+      - Filling powder (silica sand)
+      - Striker pin untuk indikasi
+
+   b. Rewirable Fuse:
+      - Fuse wire dapat diganti
+      - Rating rendah
+      - Aplikasi domestik
+
+4. APLIKASI FUSE:
+   - Short circuit protection
+   - Back-up protection untuk MCCB
+   - Motor feeder protection
+   - Transformer protection
+
+EARTH LEAKAGE PROTECTION:
+1. RESIDUAL CURRENT DEVICE (RCD):
+   - Mendeteksi arus bocor ke ground
+   - Core balance transformer principle
+   - Trip setting: 30mA, 100mA, 300mA
+
+2. EARTH LEAKAGE RELAY (ELR):
+   - Untuk instalasi industri
+   - Current transformer pada neutral
+   - Adjustable setting dan time delay
+
+3. GROUND FAULT CIRCUIT INTERRUPTER (GFCI):
+   - Built-in test facility
+   - Fast response (<30ms)
+   - Personal protection
+
+KOORDINASI PROTEKSI LENGKAP:
+1. Circuit Breaker/Fuse:
+   - Short circuit protection
+   - Fast clearing untuk high fault current
+
+2. Thermal Overload Relay:
+   - Overload protection
+   - Thermal characteristic matching motor
+
+3. Contactor:
+   - Normal switching operation
+   - Remote control capability
+
+4. Earth Leakage Protection:
+   - Ground fault protection
+   - Personnel safety
+
+FILOSOFI PROTEKSI BERLAPIS:
+- Primary protection: TOR
+- Secondary protection: Circuit breaker
+- Backup protection: Upstream MCCB/fuse
+- Ground protection: RCD/ELR
+
+TESTING DAN COMMISSIONING:
+- Primary injection test
+- Secondary injection test
+- Coordination study
+- Arc flash analysis
+- Protection setting calculation`
+        },
+          {
+          type: 'image',
+          title: 'sekering (Fuse) dan Earth Leakage Protection',
+          src: 'src/photo/gambar sekering dan ELCB.jpg',
+          caption: 'Gambar 1.4 Sekering dan ELCB'
+        },
+        {
+          type: 'text',
+          title: '2.6 Pengasutan Motor dengan DOL - Detail Analisis',
+          content: `Direct On Line (DOL) adalah metode pengasutan motor paling sederhana dimana motor langsung dihubungkan ke supply voltage tanpa pengurangan tegangan.
+
+RANGKAIAN DOL:
+Komponen utama rangkaian DOL:
+1. MCCB/MCB: proteksi hubung singkat
+2. Kontaktor: switching utama motor
+3. TOR: proteksi beban lebih
+4. Control circuit: start/stop control
+5. Auxiliary contacts: indikasi dan interlock
+
+ANALISIS ARUS START:
+Saat motor di-start dengan DOL:
+- Arus start (Ist) = 6-8 × Arus nominal (In)
+- Torque start (Tst) = 1.5-2.5 × Torque nominal (Tn)
+- Faktor daya start rendah (0.1-0.3)
+
+RUMUS ARUS START:
+Ist = E / Zst
+Dimana:
+- E = tegangan terminal
+- Zst = impedansi start motor
+
+PENGARUH ARUS START TINGGI:
+1. Pada Motor:
+   - Thermal stress pada lilitan
+   - Mechanical stress pada rotor
+   - Electromagnetic forces tinggi
+
+2. Pada Supply System:
+   - Voltage drop pada transformer
+   - Flicker pada beban lain
+   - Power quality issues
+
+3. Pada Mechanical System:
+   - Shock loading pada coupling
+   - Wear pada bearing
+   - Stress pada driven equipment
+
+APLIKASI DOL:
+Cocok untuk:
+- Motor kecil (< 10 HP pada 380V)
+- Supply system yang kuat
+- Beban dengan inertia rendah
+- Aplikasi dengan start jarang
+
+Tidak cocok untuk:
+- Motor besar dengan supply terbatas
+- Beban dengan high inertia
+- Aplikasi frequent starting
+- Sistem dengan voltage regulation ketat
+
+DESAIN CIRCUIT DOL:
+1. Main Circuit:
+   - MCB rating = 1.25 × In motor
+   - Kontaktor rating AC-3 = In motor
+   - TOR setting = 1.0 × In motor
+   - Cable sizing berdasarkan In motor
+
+2. Control Circuit:
+   - Start button (NO)
+   - Stop button (NC) + E-stop (NC)
+   - TOR auxiliary (NC)
+   - Kontaktor auxiliary (NO) untuk holding
+   - Indication lamps
+
+3. Protection Coordination:
+   - MCB: magnetic setting > Ist motor
+   - TOR: thermal setting = In motor
+   - Coordination dengan upstream protection
+
+KELEBIHAN DOL:
+- Sederhana dan murah
+- Torque start maksimum
+- Minimal voltage drop saat running
+- Maintenance rendah
+
+KEKURANGAN DOL:
+- Arus start sangat tinggi
+- Mechanical shock
+- Voltage dip pada supply
+- Tidak suitable untuk motor besar`
+        },
+        {
+          type: 'image',
+          title: 'Rangkaian DOL Motor 3 Fasa',
+          src: '/placeholder-dol-circuit.png',
+          caption: 'Gambar 1.5 Rangkaian Lengkap DOL Starting untuk Motor 3 Fasa'
+        },
+        {
+          type: 'text',
+          title: '2.7 Efisiensi Energi dan Motor Premium',
+          content: `Efisiensi energi motor listrik menjadi semakin penting dalam era konservasi energi dan pengurangan emisi karbon.
+
+KLASIFIKASI EFISIENSI MOTOR (IEC 60034-30):
+1. IE1 (Standard Efficiency):
+   - Efisiensi standar
+   - Gradually phased out
+
+2. IE2 (High Efficiency):
+   - Minimum requirement di many countries
+   - Improvement 2-3% dari IE1
+
+3. IE3 (Premium Efficiency):
+   - High efficiency requirement
+   - Improvement 15-25% losses reduction dari IE2
+
+4. IE4 (Super Premium Efficiency):
+   - Latest efficiency class
+   - Further 15-20% losses reduction dari IE3
+
+5. IE5 (Ultra Premium Efficiency):
+   - Future efficiency class
+   - Research stage
+
+TEKNOLOGI PENINGKATAN EFISIENSI:
+1. Material Improvements:
+   - Grade tinggi electrical steel
+   - Low-loss lamination
+   - High conductivity copper/aluminum
+
+2. Design Optimization:
+   - Optimal slot/pole combination
+   - Air gap optimization
+   - Improved cooling design
+
+3. Manufacturing Process:
+   - Precision manufacturing
+   - Quality control improvement
+   - Advanced winding techniques
+
+PERMANENT MAGNET MOTOR:
+1. Keunggulan:
+   - Efisiensi sangat tinggi (>95%)
+   - Power density tinggi
+   - Excellent speed control
+
+2. Jenis Magnet:
+   - Neodymium Iron Boron (NdFeB)
+   - Samarium Cobalt (SmCo)
+   - Ferrite magnet
+
+3. Aplikasi:
+   - Variable speed drives
+   - Servo applications
+   - Electric vehicles
+   - High precision equipment
+
+VARIABLE FREQUENCY DRIVE (VFD):
+1. Prinsip Kerja:
+   - Rectifier: AC to DC conversion
+   - DC Bus: energy storage
+   - Inverter: DC to variable AC
+
+2. Control Methods:
+   - V/f control (scalar)
+   - Vector control (FOC)
+   - Direct torque control (DTC)
+
+3. Benefits:
+   - Precise speed control
+   - Energy savings (fan/pump applications)
+   - Soft starting
+   - Process optimization
+
+ENERGY AUDIT MOTOR:
+1. Motor Loading Assessment:
+   - Power measurement
+   - Efficiency calculation
+   - Loading percentage
+
+2. Operating Profile:
+   - Duty cycle analysis
+   - Load variation pattern
+   - Operating hours per year
+
+3. Economic Analysis:
+   - Life cycle cost analysis
+   - Payback period calculation
+   - Energy savings potential
+
+MOTOR MANAGEMENT SYSTEM:
+1. Condition Monitoring:
+   - Vibration monitoring
+   - Temperature monitoring
+   - Current signature analysis
+
+2. Predictive Maintenance:
+   - Bearing condition
+   - Insulation degradation
+   - Rotor bar condition
+
+3. Performance Optimization:
+   - Loading optimization
+   - Power factor improvement
+   - Energy consumption tracking`
+        }
+      ]
+    }
+  ],
+  quiz: []
+};

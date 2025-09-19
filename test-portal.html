@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal SSO Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f8fafc;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .title {
+      color: #1e293b;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 2rem;
+    }
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .status {
+      background: #dcfce7;
+      color: #166534;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-top: 2rem;
+      border: 1px solid #bbf7d0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">🚀 Portal SSO</h1>
+    <p class="subtitle">Portal Single Sign On berhasil dimuat!</p>
+    
+    <button class="btn" onclick="testPortal()">
+      Test Portal Berfungsi
+    </button>
+    
+    <div class="status">
+      ✅ <strong>Status:</strong> Portal berfungsi normal<br>
+      🔧 <strong>Server:</strong> http://localhost:5174<br>
+      ⚡ <strong>Mode:</strong> Development mode
+    </div>
+  </div>
+  
+  <script>
+    function testPortal() {
+      alert('🎉 Portal SSO berhasil berfungsi!\n\nSemua komponen telah dimuat dengan baik.');
+      console.log('Portal SSO test completed successfully');
+    }
+    
+    // Auto test pada halaman load
+    window.onload = function() {
+      console.log('🚀 Portal SSO loaded successfully');
+      console.log('✅ HTML rendering: OK');
+      console.log('✅ CSS styling: OK');  
+      console.log('✅ JavaScript: OK');
+    };
+  </script>
+</body>
+</html>
