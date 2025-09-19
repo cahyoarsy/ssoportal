@@ -1,0 +1,936 @@
+/* =============================================
+   CYPHER-ADMIN v2.1.7 - HACKER TERMINAL THEME
+   Fresh Penetration Testing Dashboard Interface
+   ============================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --hacker-bg: #000000;
+  --hacker-primary: #00ff41;
+  --hacker-secondary: #008f11;
+  --hacker-accent: #39ff14;
+  --hacker-warning: #ffff00;
+  --hacker-danger: #ff0000;
+  --hacker-info: #00ffff;
+  --hacker-text: #00ff41;
+  --hacker-muted: #004d00;
+  --hacker-border: #003300;
+  --hacker-panel: rgba(0, 20, 0, 0.8);
+  --hacker-glow: 0 0 10px var(--hacker-primary);
+  --terminal-font: 'JetBrains Mono', 'Share Tech Mono', 'Courier New', monospace;
+}
+
+html.hacker-mode {
+  background: var(--hacker-bg);
+  font-family: var(--terminal-font);
+}
+
+body {
+  background: var(--hacker-bg);
+  color: var(--hacker-text);
+  font-family: var(--terminal-font);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Matrix Background Canvas */
+#matrix-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Terminal Header */
+.terminal-header {
+  background: linear-gradient(180deg, #001100 0%, #000800 100%);
+  border-bottom: 2px solid var(--hacker-primary);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: var(--hacker-glow);
+}
+
+.terminal-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(0, 255, 65, 0.1);
+  border-bottom: 1px solid var(--hacker-secondary);
+}
+
+.terminal-title {
+  color: var(--hacker-primary);
+  font-weight: bold;
+  font-size: 16px;
+  text-shadow: var(--hacker-glow);
+  letter-spacing: 1px;
+}
+
+.terminal-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timestamp {
+  color: var(--hacker-accent);
+  font-family: var(--terminal-font);
+  font-size: 12px;
+  background: rgba(0, 255, 65, 0.1);
+  padding: 4px 8px;
+  border: 1px solid var(--hacker-secondary);
+  border-radius: 3px;
+}
+
+.terminal-btn {
+  background: rgba(0, 255, 65, 0.1);
+  border: 1px solid var(--hacker-secondary);
+  color: var(--hacker-primary);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: var(--terminal-font);
+  font-size: 12px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.terminal-btn:hover {
+  background: rgba(0, 255, 65, 0.2);
+  box-shadow: var(--hacker-glow);
+  transform: scale(1.05);
+}
+
+.terminal-btn.close {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: #ff0000;
+  color: #ff0000;
+}
+
+.terminal-btn.close:hover {
+  background: rgba(255, 0, 0, 0.2);
+  box-shadow: 0 0 10px #ff0000;
+}
+
+/* Command Line */
+.command-line {
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.8);
+  font-family: var(--terminal-font);
+  border-top: 1px solid var(--hacker-border);
+}
+
+.prompt {
+  color: var(--hacker-accent);
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.typing-text {
+  color: var(--hacker-primary);
+}
+
+.cursor {
+  color: var(--hacker-accent);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Main Terminal Interface */
+.terminal-main {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ASCII Banner */
+.ascii-banner {
+  text-align: center;
+  margin-bottom: 30px;
+  overflow: hidden;
+}
+
+#ascii-art {
+  color: var(--hacker-primary);
+  font-size: 8px;
+  line-height: 1;
+  text-shadow: var(--hacker-glow);
+  animation: glow-pulse 3s ease-in-out infinite;
+  font-family: monospace;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { text-shadow: var(--hacker-glow); }
+  50% { text-shadow: 0 0 20px var(--hacker-primary), 0 0 30px var(--hacker-primary); }
+}
+
+/* Command Menu */
+.command-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.menu-item {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  color: var(--hacker-text);
+  padding: 12px 20px;
+  cursor: pointer;
+  font-family: var(--terminal-font);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.menu-item:hover {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: var(--hacker-primary);
+  color: var(--hacker-accent);
+  box-shadow: var(--hacker-glow);
+  transform: translateY(-2px);
+}
+
+.menu-item.active {
+  background: rgba(0, 255, 65, 0.2);
+  border-color: var(--hacker-accent);
+  color: var(--hacker-accent);
+  box-shadow: var(--hacker-glow);
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.menu-item:hover::before {
+  left: 100%;
+}
+
+/* Content Area */
+.content-area {
+  position: relative;
+}
+
+.terminal-section {
+  display: none;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.terminal-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section Headers */
+.section-header {
+  margin-bottom: 25px;
+  position: relative;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--hacker-secondary);
+}
+
+.section-header h3 {
+  color: var(--hacker-accent);
+  font-size: 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: var(--hacker-glow);
+  margin: 0;
+}
+
+.scan-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--hacker-primary), transparent);
+  animation: scan 2s linear infinite;
+  margin-top: 5px;
+}
+
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-module {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  padding: 20px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.stat-module:hover {
+  border-color: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+  transform: translateY(-5px);
+}
+
+.stat-module::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--hacker-primary), var(--hacker-accent));
+  animation: progress-glow 2s ease-in-out infinite;
+}
+
+@keyframes progress-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.module-header {
+  color: var(--hacker-secondary);
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.module-value {
+  color: var(--hacker-accent);
+  font-size: 32px;
+  font-weight: bold;
+  text-shadow: var(--hacker-glow);
+  margin-bottom: 8px;
+  font-family: var(--terminal-font);
+}
+
+.module-status {
+  color: var(--hacker-primary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 15px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--hacker-border);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--hacker-primary), var(--hacker-accent));
+  border-radius: 2px;
+  animation: progress-pulse 2s ease-in-out infinite;
+}
+
+@keyframes progress-pulse {
+  0%, 100% { box-shadow: 0 0 5px var(--hacker-primary); }
+  50% { box-shadow: 0 0 15px var(--hacker-primary), 0 0 25px var(--hacker-accent); }
+}
+
+/* Log Container */
+.log-container {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  border-radius: 4px;
+  margin-bottom: 30px;
+  overflow: hidden;
+}
+
+.log-header {
+  background: rgba(0, 255, 65, 0.1);
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--hacker-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.log-header span {
+  color: var(--hacker-accent);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.log-control {
+  background: transparent;
+  border: 1px solid var(--hacker-secondary);
+  color: var(--hacker-primary);
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.log-control:hover {
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: var(--hacker-glow);
+}
+
+.log-content {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px 15px;
+  font-family: var(--terminal-font);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.log-entry {
+  margin-bottom: 5px;
+  padding: 2px 0;
+  animation: log-appear 0.5s ease-in-out;
+}
+
+@keyframes log-appear {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.log-entry.success { color: var(--hacker-primary); }
+.log-entry.warning { color: var(--hacker-warning); }
+.log-entry.error { color: var(--hacker-danger); }
+.log-entry.info { color: var(--hacker-info); }
+
+/* Filter Controls */
+.filter-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.terminal-input, .terminal-select {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  color: var(--hacker-text);
+  padding: 8px 12px;
+  font-family: var(--terminal-font);
+  font-size: 14px;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.terminal-input:focus, .terminal-select:focus {
+  outline: none;
+  border-color: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+  background: rgba(0, 255, 65, 0.05);
+}
+
+.terminal-input::placeholder {
+  color: var(--hacker-muted);
+}
+
+/* Targets Grid */
+.targets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.target-card {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  border-radius: 4px;
+  padding: 15px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.target-card:hover {
+  border-color: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+  transform: translateY(-3px);
+}
+
+.target-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hacker-border);
+}
+
+.target-id {
+  color: var(--hacker-accent);
+  font-weight: bold;
+  font-family: var(--terminal-font);
+}
+
+.target-status {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-compromised {
+  background: rgba(255, 0, 0, 0.2);
+  color: var(--hacker-danger);
+  border: 1px solid var(--hacker-danger);
+}
+
+.status-pending {
+  background: rgba(255, 255, 0, 0.2);
+  color: var(--hacker-warning);
+  border: 1px solid var(--hacker-warning);
+}
+
+.status-failed {
+  background: rgba(128, 128, 128, 0.2);
+  color: #808080;
+  border: 1px solid #808080;
+}
+
+.target-info {
+  margin-bottom: 15px;
+}
+
+.target-name {
+  color: var(--hacker-primary);
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.target-email {
+  color: var(--hacker-secondary);
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.target-vuln {
+  color: var(--hacker-info);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.target-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.risk-level {
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.risk-critical {
+  background: rgba(255, 0, 0, 0.3);
+  color: var(--hacker-danger);
+  border: 1px solid var(--hacker-danger);
+}
+
+.risk-high {
+  background: rgba(255, 165, 0, 0.3);
+  color: #ffa500;
+  border: 1px solid #ffa500;
+}
+
+.risk-medium {
+  background: rgba(255, 255, 0, 0.3);
+  color: var(--hacker-warning);
+  border: 1px solid var(--hacker-warning);
+}
+
+.risk-low {
+  background: rgba(0, 255, 65, 0.3);
+  color: var(--hacker-primary);
+  border: 1px solid var(--hacker-primary);
+}
+
+.breach-count {
+  color: var(--hacker-muted);
+  font-size: 12px;
+}
+
+.target-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  background: transparent;
+  border: 1px solid var(--hacker-secondary);
+  color: var(--hacker-primary);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: var(--terminal-font);
+  font-size: 11px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.action-btn:hover {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+  transform: scale(1.05);
+}
+
+/* Network Visualization */
+.network-viz {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  border-radius: 4px;
+  padding: 20px;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#network-chart {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Reports Grid */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.report-item {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  border-radius: 4px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.3s ease;
+}
+
+.report-item:hover {
+  border-color: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+}
+
+.report-item i {
+  color: var(--hacker-accent);
+  font-size: 24px;
+}
+
+.report-item span {
+  color: var(--hacker-text);
+  flex: 1;
+  font-weight: bold;
+}
+
+.terminal-btn-small {
+  background: transparent;
+  border: 1px solid var(--hacker-secondary);
+  color: var(--hacker-primary);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: var(--terminal-font);
+  font-size: 11px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.terminal-btn-small:hover {
+  background: rgba(0, 255, 65, 0.1);
+  border-color: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+}
+
+/* Config Options */
+.config-options {
+  background: var(--hacker-panel);
+  border: 1px solid var(--hacker-secondary);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hacker-border);
+}
+
+.config-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.config-item label {
+  color: var(--hacker-text);
+  font-weight: bold;
+}
+
+.terminal-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--hacker-primary);
+}
+
+/* Terminal Modal */
+.terminal-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--hacker-panel);
+  border: 2px solid var(--hacker-primary);
+  border-radius: 4px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: var(--hacker-glow);
+}
+
+.modal-header {
+  background: rgba(0, 255, 65, 0.1);
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--hacker-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header span {
+  color: var(--hacker-accent);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--hacker-danger);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 50%;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+/* Target Analysis */
+.target-analysis {
+  color: var(--hacker-text);
+}
+
+.analysis-header {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--hacker-secondary);
+}
+
+.analysis-header .target-id {
+  color: var(--hacker-accent);
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.analysis-header .target-name {
+  color: var(--hacker-primary);
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.analysis-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hacker-border);
+}
+
+.analysis-item label {
+  color: var(--hacker-secondary);
+  font-weight: bold;
+}
+
+.analysis-item span {
+  color: var(--hacker-text);
+}
+
+.analysis-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--hacker-bg);
+  border: 1px solid var(--hacker-border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hacker-secondary);
+  border-radius: 6px;
+  border: 2px solid var(--hacker-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hacker-primary);
+  box-shadow: var(--hacker-glow);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .terminal-main {
+    padding: 10px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .targets-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .command-menu {
+    flex-direction: column;
+  }
+  
+  .menu-item {
+    width: 100%;
+    text-align: center;
+  }
+  
+  #ascii-art {
+    font-size: 6px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+  }
+  
+  .terminal-input, .terminal-select {
+    min-width: 100%;
+  }
+}
+
+/* Animation for page load */
+@keyframes terminal-boot {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+body {
+  animation: terminal-boot 1s ease-in-out;
+}
+
+/* Glitch effect for critical elements */
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.stat-module:hover .module-value {
+  animation: glitch 0.3s ease-in-out;
+}
+
+/* Fresh hacker interface complete - legacy styles disabled */

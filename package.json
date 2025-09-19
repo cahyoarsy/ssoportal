@@ -4,31 +4,48 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run dev:5174",
+    "dev:backup": "npm run dev:3000",
+    "dev:alt": "npm run dev:8080",
     "build": "vite build",
+    "build:github": "vite build --mode production",
     "preview": "vite preview",
+    "preview:github": "vite preview --mode production",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky install",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build:github",
     "deploy": "gh-pages -d dist",
-    "postbuild": "node scripts/postbuild.cjs"
+    "deploy:github": "npm run build:github && gh-pages -d dist",
+    "postbuild": "node scripts/postbuild.cjs",
+    "port:who": "powershell -Command \"Get-NetTCPConnection -LocalPort 5174 -ErrorAction SilentlyContinue | Select-Object -First 5 -Property LocalPort,State,OwningProcess | Format-Table -AutoSize; $p = (Get-NetTCPConnection -LocalPort 5174 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess); if($p){ Write-Host 'Process:'; Get-Process -Id $p | Select-Object Id,ProcessName,Path } else { Write-Host 'No process bound.' }\"",
+    "port:free": "powershell -Command \"$conns = Get-NetTCPConnection -LocalPort 5174 -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 }; if(!$conns){ Write-Host 'Port already free'; exit 0 }; $processIds = $conns | Select-Object -ExpandProperty OwningProcess -Unique; foreach($processId in $processIds){ try { $proc = Get-Process -Id $processId -ErrorAction Stop; if($proc.ProcessName -eq 'node'){ Write-Host 'Stopping node PID' $processId; Stop-Process -Id $processId -Force } else { Write-Host 'Skip PID' $processId '->' $proc.ProcessName } } catch { Write-Host 'Cannot access PID' $processId } }\"",
+    "dev:5174": "npm run port:free && vite --port 5174 --strictPort",
+    "dev:3000": "npm run port:free:3000 && vite --port 3000 --strictPort",
+    "dev:8080": "npm run port:free:8080 && vite --port 8080 --strictPort",
+    "port:free:3000": "powershell -Command \"$conns = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 }; if(!$conns){ Write-Host 'Port 3000 already free'; exit 0 }; $processIds = $conns | Select-Object -ExpandProperty OwningProcess -Unique; foreach($processId in $processIds){ try { $proc = Get-Process -Id $processId -ErrorAction Stop; if($proc.ProcessName -eq 'node'){ Write-Host 'Stopping node PID' $processId; Stop-Process -Id $processId -Force } else { Write-Host 'Skip PID' $processId '->' $proc.ProcessName } } catch { Write-Host 'Cannot access PID' $processId } }\"",
+    "port:free:8080": "powershell -Command \"$conns = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 }; if(!$conns){ Write-Host 'Port 8080 already free'; exit 0 }; $processIds = $conns | Select-Object -ExpandProperty OwningProcess -Unique; foreach($processId in $processIds){ try { $proc = Get-Process -Id $processId -ErrorAction Stop; if($proc.ProcessName -eq 'node'){ Write-Host 'Stopping node PID' $processId; Stop-Process -Id $processId -Force } else { Write-Host 'Skip PID' $processId '->' $proc.ProcessName } } catch { Write-Host 'Cannot access PID' $processId } }\"",
+    "dev:force": "npm run port:free && vite"
   },
   "dependencies": {
+    "cli": "^1.0.1",
+    "firebase": "^12.2.1",
     "framer-motion": "^11.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.3",
     "@vitejs/plugin-react": "^5.0.2",
     "autoprefixer": "^10.4.19",
     "gh-pages": "^6.0.0",
+    "husky": "^9.0.0",
+    "jsdom": "^27.0.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.9",
     "vite": "^7.1.5",
-    "vitest": "^2.0.0",
-    "husky": "^9.0.0"
+    "vitest": "^2.0.0"
   }
 }

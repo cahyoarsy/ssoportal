@@ -40,7 +40,7 @@
       window.location.href = baseUrl;
     }
 
-    function simulateGoogleLogin(code, email = null) {
+  function simulateGoogleLogin(code, email = null) {
       // Simulate successful Google login by creating a mock JWT and storing it
       const now = Math.floor(Date.now() / 1000);
       const mockEmail = email || 'user@gmail.com'; // Default for demo
@@ -59,7 +59,7 @@
         return btoa(JSON.stringify(obj)).replace(/=+/g,'').replace(/\+/g,'-').replace(/\//g,'_');
       }
       
-      const jwt = b64(header) + '.' + b64(payload) + '.demo-google';
+  const jwt = b64(header) + '.' + b64(payload) + '.demo-google';
       
       // Store in sessionStorage like regular login
       sessionStorage.setItem('sso-jwt', jwt);
@@ -73,7 +73,7 @@
         }
       } catch {}
       
-      return { success: true, email: mockEmail };
+      return { success: true, email: mockEmail, credential: jwt, profile: payload };
     }
 
     (function(){
@@ -101,6 +101,12 @@
           <p>Deskripsi: ${usp.get('error_description') || 'Tidak ada deskripsi'}</p>
           <button onclick="redirectToPortal()">Kembali ke Portal</button>
         `;
+        // Notify opener about error if possible
+        try {
+          if (window.opener && window.opener !== window) {
+            window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: error }, window.location.origin);
+          }
+        } catch {}
         return;
       }
       
@@ -134,10 +140,24 @@
             document.getElementById('content').style.display = 'block';
             document.getElementById('success-msg').textContent = `Selamat datang, ${result.email}!`;
             
-            // Auto redirect after 3 seconds
+            // Notify opener (popup flow)
+            try {
+              if (window.opener && window.opener !== window) {
+                window.opener.postMessage({
+                  type: 'GOOGLE_AUTH_SUCCESS',
+                  credential: result.credential,
+                  mockUserData: result.profile
+                }, window.location.origin);
+                // Close the popup shortly after
+                setTimeout(() => window.close(), 500);
+                return; // Do not redirect this tab
+              }
+            } catch {}
+
+            // Fallback: redirect this page back to portal
             setTimeout(() => {
               redirectToPortal();
-            }, 3000);
+            }, 1000);
           }
         } catch (err) {
           document.getElementById('status').style.display = 'none';
@@ -146,6 +166,11 @@
             <p>Error memproses login: ${err.message}</p>
             <button onclick="redirectToPortal()">Kembali ke Portal</button>
           `;
+          try {
+            if (window.opener && window.opener !== window) {
+              window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: err.message }, window.location.origin);
+            }
+          } catch {}
         }
       }, 1000);
       

@@ -1,0 +1,1 @@
+export { default as SoftwarePage } from './SoftwarePage.jsx';
