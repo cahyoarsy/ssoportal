@@ -8,7 +8,6 @@ export default function ModuleLearning({ user, moduleId, onBack, onComplete, mod
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [completedSections, setCompletedSections] = useState(new Set());
   const [showQuiz, setShowQuiz] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const normalizeModuleId = (id) => (id && id.startsWith('module-') ? id.replace('module-', 'modul-') : id);
   const internalModuleId = normalizeModuleId(moduleId);
@@ -73,41 +72,41 @@ export default function ModuleLearning({ user, moduleId, onBack, onComplete, mod
     if (!slide) return null;
     
     return (
-      <motion.div
+      <motion.div 
         key={`${currentSectionIndex}-${currentSlideIndex}`}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, x: 20 }} 
+        animate={{ opacity: 1, x: 0 }} 
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
-        className="bg-gradient-to-br from-white to-blue-50 rounded-xl md:rounded-2xl p-4 md:p-8 shadow-lg border border-blue-100"
+        className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-8 shadow-lg border border-blue-100"
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6">
-          <div className="flex items-center space-x-3 mb-2 md:mb-0">
-            <div className="px-2 md:px-3 py-1 bg-blue-600 text-white rounded-full text-xs md:text-sm font-semibold">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm font-semibold">
               {`${currentSectionIndex + 1}.${currentSlideIndex + 1}`}
             </div>
             <div>
-              <h2 className="text-lg md:text-2xl font-bold text-gray-800 underline decoration-blue-400 decoration-2 mb-1">{slide.title}</h2>
-              <p className="text-xs md:text-sm text-blue-600 font-medium italic">{currentSection.title}</p>
+              <h2 className="text-2xl font-bold text-gray-800 underline decoration-blue-400 decoration-2 mb-1">{slide.title}</h2>
+              <p className="text-sm text-blue-600 font-medium italic">{currentSection.title}</p>
             </div>
           </div>
-          <div className="text-xs md:text-sm text-gray-500">
+          <div className="text-sm text-gray-500">
             Slide {`${currentSectionIndex + 1}.${currentSlideIndex + 1}`} of {`${currentSectionIndex + 1}.${totalSlides}`}
           </div>
         </div>
 
-        <div className="prose prose-sm md:prose-lg max-w-none">
+        <div className="prose prose-lg max-w-none indent-4">
           {slide.type === 'text' && (
-            <div className="text-gray-700 leading-relaxed whitespace-pre-line text-justify text-sm md:text-base">
+            <div className="text-gray-700 leading-relaxed whitespace-pre-line text-justify">
               {slide.content}
             </div>
           )}
           {slide.type === 'image' && (
-            <div className="text-center my-4 md:my-8">
-              <div className="bg-white p-2 md:p-4 rounded-lg md:rounded-xl shadow-sm inline-block">
-                <img src={slide.src} alt={slide.title} className="max-w-full h-auto rounded-md md:rounded-lg" />
+            <div className="text-center my-8">
+              <div className="bg-white p-4 rounded-xl shadow-sm inline-block">
+                <img src={slide.src} alt={slide.title} className="max-w-full h-auto rounded-lg" />
                 {slide.caption && (
-                  <p className="text-xs md:text-sm text-gray-600 mt-2 md:mt-3 italic">{slide.caption}</p>
+                  <p className="text-sm text-gray-600 mt-3 italic">{slide.caption}</p>
                 )}
               </div>
             </div>
@@ -132,46 +131,34 @@ export default function ModuleLearning({ user, moduleId, onBack, onComplete, mod
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header dengan Progress */}
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4">
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 md:space-x-4">
+            <div className="flex items-center space-x-4">
               <button 
                 onClick={onBack}
-                className="flex items-center space-x-1 md:space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="font-medium text-sm md:text-base">Kembali</span>
-              </button>
-              
-              {/* Mobile menu button for sidebar */}
-              <button 
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors p-2"
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="text-sm font-medium">Menu</span>
+                <span className="font-medium">Kembali</span>
               </button>
-              
-              <div className="border-l border-gray-300 pl-2 md:pl-4">
-                <h1 className="text-lg md:text-xl font-bold text-gray-800">{currentModule.title}</h1>
-                <p className="text-xs md:text-sm text-gray-600 hidden sm:block">{currentModule.description}</p>
+              <div className="border-l border-gray-300 pl-4">
+                <h1 className="text-xl font-bold text-gray-800">{currentModule.title}</h1>
+                <p className="text-sm text-gray-600">{currentModule.description}</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xs md:text-sm text-gray-600 mb-1 hidden sm:block">Progress Pembelajaran</div>
+              <div className="text-sm text-gray-600 mb-1">Progress Pembelajaran</div>
               <div className="flex items-center space-x-2">
-                <div className="w-16 md:w-32 bg-gray-200 rounded-full h-2">
+                <div className="w-32 bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(progressPercentage, 100)}%` }}
                   ></div>
                 </div>
-                <span className="text-xs md:text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700">
                   {Math.round(progressPercentage)}%
                 </span>
               </div>
@@ -180,66 +167,11 @@ export default function ModuleLearning({ user, moduleId, onBack, onComplete, mod
         </div>
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={() => setSidebarOpen(false)}>
-          <div className="bg-white w-80 h-full shadow-lg overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-800">Daftar Materi</h3>
-                <button 
-                  onClick={() => setSidebarOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-2">
-                {currentModule.sections.map((section, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setCurrentSectionIndex(idx);
-                      setCurrentSlideIndex(0);
-                      setSidebarOpen(false);
-                    }}
-                    className={`w-full text-left p-3 rounded-lg transition-all ${
-                      idx === currentSectionIndex 
-                        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300' 
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="font-medium text-sm">{section.title}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {section.slides.length} slide{section.slides.length > 1 ? 's' : ''}
-                    </div>
-                  </button>
-                ))}
-              </div>
-              
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <button 
-                  onClick={() => {
-                    handleSectionComplete(currentSection?.id || currentSection?.title);
-                    setSidebarOpen(false);
-                  }}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-md"
-                >
-                  ✓ Tandai Selesai
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8">
-          {/* Desktop Sidebar Navigasi */}
-          <div className="hidden md:block md:col-span-3">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-12 gap-8">
+          {/* Sidebar Navigasi */}
+          <div className="col-span-3">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
               <h3 className="text-lg font-bold text-gray-800 mb-4">Daftar Materi</h3>
               <div className="space-y-2">
@@ -266,62 +198,6 @@ export default function ModuleLearning({ user, moduleId, onBack, onComplete, mod
               
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <button 
-                  onClick={() => handleSectionComplete(currentSection?.id || currentSection?.title)}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-md"
-                >
-                  ✓ Tandai Selesai
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Content Area */}
-          <div className="col-span-1 md:col-span-9">
-            {currentSlide && renderSlide(currentSlide)}
-            
-            {/* Navigation Controls */}
-            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 md:mt-8 gap-4">
-              <button 
-                onClick={prevSlide}
-                disabled={currentSectionIndex === 0 && currentSlideIndex === 0}
-                className="flex items-center space-x-2 px-4 md:px-6 py-2 md:py-3 bg-white text-gray-700 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200 w-full sm:w-auto justify-center"
-              >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="font-medium text-sm md:text-base">Sebelumnya</span>
-              </button>
-
-              <div className="flex items-center space-x-1 md:space-x-2 order-first sm:order-none">
-                {Array.from({ length: totalSlides }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentSlideIndex(i)}
-                    className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${
-                      i === currentSlideIndex 
-                        ? 'bg-blue-600 scale-125' 
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <button 
-                onClick={nextSlide}
-                disabled={currentSectionIndex === currentModule.sections.length - 1 && currentSlideIndex === totalSlides - 1}
-                className="flex items-center space-x-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
-              >
-                <span className="font-medium text-sm md:text-base">Selanjutnya</span>
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
                   onClick={() => handleSectionComplete(currentSection?.id || currentSection?.title)}
                   className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-3 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-md"
                 >
